@@ -7,6 +7,7 @@
 html,
 body {
   height: 100%;
+  overscroll-behavior: none;
 }
 
 body {
@@ -25,7 +26,27 @@ body {
 .game-frame {
   position: relative;
   width: 100%;
-  max-width: 960px;
+  /* Fit by width, but never taller than the viewport (960:600 aspect). */
+  max-width: min(960px, calc((100vh - 48px) * 1.6));
+  max-width: min(960px, calc((100dvh - 48px) * 1.6));
+}
+
+@media (max-width: 700px) {
+  .page {
+    padding: 6px;
+  }
+
+  .game-frame {
+    max-width: min(960px, calc((100dvh - 12px) * 1.6));
+  }
+}
+
+/* Portrait phones: keep the game up top, controls own the space below. */
+@media (max-width: 700px) and (orientation: portrait) {
+  .page {
+    align-items: flex-start;
+    padding-top: 12px;
+  }
 }
 
 .game-canvas {
@@ -36,6 +57,7 @@ body {
   border-radius: 4px;
   background: #6fb545;
   image-rendering: pixelated;
+  touch-action: none;
 }
 
 .game-over {
@@ -235,4 +257,89 @@ body {
   font-size: 8px;
   line-height: 1.7;
   color: rgba(10, 12, 16, 0.7);
+}
+
+/* --- Touch controls (rendered only on coarse-pointer devices) --- */
+
+.touch-controls {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.joystick {
+  position: absolute;
+  left: 20px;
+  bottom: 20px;
+  width: 128px;
+  height: 128px;
+  border-radius: 50%;
+  background: rgba(10, 12, 16, 0.35);
+  border: 2px solid rgba(244, 241, 232, 0.35);
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.joystick-nub {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 54px;
+  height: 54px;
+  margin: -27px 0 0 -27px;
+  border-radius: 50%;
+  background: rgba(244, 241, 232, 0.55);
+  border: 2px solid rgba(10, 12, 16, 0.4);
+}
+
+.touch-button {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(10, 12, 16, 0.45);
+  border: 2px solid rgba(244, 241, 232, 0.4);
+  color: #f4f1e8;
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.touch-button:active {
+  background: rgba(255, 210, 63, 0.55);
+}
+
+.tb-punch {
+  right: 22px;
+  bottom: 26px;
+  width: 72px;
+  height: 72px;
+  font-size: 30px;
+}
+
+.tb-kick {
+  right: 104px;
+  bottom: 52px;
+  width: 60px;
+  height: 60px;
+  font-size: 24px;
+}
+
+.tb-dash {
+  right: 34px;
+  bottom: 110px;
+  width: 60px;
+  height: 60px;
+  font-size: 24px;
+}
+
+.tb-special {
+  right: 112px;
+  bottom: 126px;
+  width: 52px;
+  height: 52px;
+  font-size: 22px;
 }

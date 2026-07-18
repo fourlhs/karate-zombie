@@ -9,9 +9,10 @@ import {
   WORLD_HEIGHT,
   WORLD_WIDTH,
 } from "@/game/constants";
+import TouchControls from "@/components/TouchControls";
 import { attachInput } from "@/game/input";
 import { setMusicIntensity, startMusic, stopMusic } from "@/game/music";
-import { render, setHudFont } from "@/game/render";
+import { render, setHudFont, setTouchMode } from "@/game/render";
 import { createInitialState, createInputState } from "@/game/state";
 import type { GameState, InputState, UpgradeKind } from "@/game/types";
 import { applyUpgrade, update } from "@/game/update";
@@ -50,6 +51,7 @@ export default function Game() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [isTouch, setIsTouch] = useState(false);
   const upgradeShownRef = useRef(false);
 
   useEffect(() => {
@@ -61,6 +63,15 @@ export default function Game() {
     const stored = localStorage.getItem(SOUND_KEY) !== "off";
     setSoundOn(stored);
     setMuted(!stored);
+  }, []);
+
+  // Touch devices get on-screen controls and a keyboard-free HUD.
+  useEffect(() => {
+    const touch =
+      navigator.maxTouchPoints > 0 ||
+      window.matchMedia("(pointer: coarse)").matches;
+    setIsTouch(touch);
+    setTouchMode(touch);
   }, []);
 
 
@@ -224,6 +235,7 @@ export default function Game() {
       >
         ⚙
       </button>
+      {isTouch && <TouchControls inputRef={inputRef} />}
       {overlay.visible && (
         <div className="game-over">
           <h1>GAME OVER</h1>

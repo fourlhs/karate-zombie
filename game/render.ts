@@ -41,10 +41,16 @@ const SPRITE_SCALE = 3;
 const BOSS_SCALE = 5;
 
 let hudFont = "monospace";
+let touchMode = false;
 
 /** Lets the React shell pass in the loaded arcade font family. */
 export function setHudFont(fontFamily: string): void {
   hudFont = fontFamily;
+}
+
+/** On touch devices the HUD drops its keyboard hints. */
+export function setTouchMode(value: boolean): void {
+  touchMode = value;
 }
 
 /** Draws one full frame from the current state. */
@@ -400,13 +406,15 @@ function drawHud(
   );
   ctx.textAlign = "left";
 
-  ctx.font = `10px ${hudFont}`;
-  ctx.fillStyle = "rgba(20, 35, 12, 0.55)";
-  ctx.fillText(
-    "WASD MOVE · SPACE PUNCH · K KICK · SHIFT DASH",
-    16,
-    WORLD_HEIGHT - 26
-  );
+  if (!touchMode) {
+    ctx.font = `10px ${hudFont}`;
+    ctx.fillStyle = "rgba(20, 35, 12, 0.55)";
+    ctx.fillText(
+      "WASD MOVE · SPACE PUNCH · K KICK · SHIFT DASH",
+      16,
+      WORLD_HEIGHT - 26
+    );
+  }
 
   // Special meter, bottom center.
   const ratio = state.special / SPECIAL_MAX;
@@ -422,7 +430,11 @@ function drawHud(
   if (ratio >= 1) {
     if (Math.floor(state.elapsed * 3) % 2 === 0) {
       ctx.fillStyle = "#ffd23f";
-      ctx.fillText("PRESS J!", WORLD_WIDTH / 2, barY - 14);
+      ctx.fillText(
+        touchMode ? "SPECIAL READY!" : "PRESS J!",
+        WORLD_WIDTH / 2,
+        barY - 14
+      );
     }
   } else {
     ctx.fillStyle = "rgba(20, 35, 12, 0.55)";
