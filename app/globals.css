@@ -66,22 +66,11 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 12px;
-  padding: 16px 12px;
   background: rgba(10, 12, 16, 0.82);
   border-radius: 8px;
   text-align: center;
-  overflow-y: auto;
-}
-
-/* Center when content fits, scroll from the top when it doesn't
-   (justify-content: center would clip the top of overflowing content). */
-.game-over > :first-child {
-  margin-top: auto;
-}
-
-.game-over > :last-child {
-  margin-bottom: auto;
 }
 
 .game-over h1 {
@@ -105,92 +94,6 @@ body {
   font-size: 13px;
   color: #ffd23f;
   text-shadow: 2px 2px 0 #4a3a00;
-}
-
-.game-over .leaderboard {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  margin-top: 4px;
-}
-
-.game-over .leaderboard h2 {
-  font-size: 13px;
-  letter-spacing: 2px;
-  color: #ffd23f;
-  text-shadow: 2px 2px 0 #4a3a00;
-}
-
-.game-over .leaderboard ol {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 220px;
-}
-
-.game-over .leaderboard li {
-  display: flex;
-  justify-content: space-between;
-  gap: 24px;
-  font-size: 11px;
-}
-
-.game-over .leaderboard .lb-score {
-  color: #ffd23f;
-}
-
-.game-over .lb-note {
-  font-size: 10px;
-  color: rgba(244, 241, 232, 0.7);
-}
-
-.game-over .lb-note.qualify {
-  color: #ffd23f;
-}
-
-.game-over .lb-note.done {
-  color: #7bd35a;
-}
-
-.name-entry {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  margin-top: 4px;
-}
-
-.name-entry-row {
-  display: flex;
-  gap: 8px;
-}
-
-.name-entry input {
-  width: 180px;
-  padding: 10px;
-  font-family: inherit;
-  font-size: 12px;
-  color: #f4f1e8;
-  background: #0a0c10;
-  border: 2px solid rgba(244, 241, 232, 0.5);
-}
-
-.name-entry input:focus {
-  outline: none;
-  border-color: #ffd23f;
-}
-
-.game-over .name-entry button {
-  margin-top: 0;
-  padding: 10px 16px;
-  font-size: 11px;
-}
-
-.game-over button:disabled {
-  opacity: 0.5;
-  cursor: default;
 }
 
 .game-over button {

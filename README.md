@@ -1,12 +1,7 @@
 # Karate Zombies
 
 A single-screen browser game built with Next.js 14 (app router) and TypeScript.
-Everything runs client-side on an HTML canvas — no backend and no assets. The
-only network dependency is an optional global top-3 leaderboard backed by
-Supabase (`game/leaderboard.ts`, schema in `supabase/migrations/`): scores are
-read and submitted with the public anon key under Row Level Security policies
-that allow select and insert only. If Supabase is unreachable the game falls
-back to the localStorage best score.
+Everything runs client-side on an HTML canvas — no backend, no database, no assets.
 
 ## How to run
 
