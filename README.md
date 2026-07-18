@@ -24,6 +24,9 @@ For a production build: `npm run build && npm start`.
 - **Shift** — dash: a quick burst in the direction you're moving (or facing),
   with a 1-second cooldown. You're invulnerable during the burst — it's a
   dodge.
+- **J** — special: kills charge the meter at the bottom; when it's full, J
+  unleashes a shockwave that kills every regular zombie on screen (chaining
+  your combo), heavily damages the boss, and slows time for a beat.
 - Zombies spawn at random screen edges and walk toward you. Hitting one with
   your attack kills it and scores points. If one reaches you, it deals 1 damage
   and is destroyed. At 0 health you get a Game Over screen with your final
@@ -44,10 +47,22 @@ For a production build: `npm run build && npm start`.
   when it trembles with a "!" overhead, dash out of the way.
 - Your best score is saved in the browser (localStorage) and shown as BEST in
   the HUD and on the Game Over screen.
+- Each dawn you survive pauses the game for an upgrade pick: +1 damage,
+  faster attacks, or +1 max heart. Later days spawn tougher zombies with 2–3
+  hp (shown as a mini health bar), so damage upgrades stay meaningful.
+- Kills spray goo particles; boss deaths hit a beat of slow motion.
 - **Esc** (or the ⚙ button) opens settings: a controls reference and a sound
   on/off toggle (remembered across sessions). The game pauses while it's open.
-- All sound effects are synthesized in code with the Web Audio API — like the
-  art, there are no asset files.
+- All audio is synthesized in code with the Web Audio API — sound effects and
+  a chiptune music loop (a 16-step sequencer) that speeds up with your combo.
+  Like the art, there are no asset files.
+
+## Dev test mode
+
+Open the game with `?test=1` to expose `window.__kz` — live getters for the
+game state and input plus `restart()`. Test drivers use it to read positions
+directly and set up scenarios instantly (spawn a boss, fill the special
+meter, jump to dawn) instead of pixel-scanning screenshots.
 
 ## Architecture
 
