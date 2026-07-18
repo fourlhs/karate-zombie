@@ -29,6 +29,9 @@ For a production build: `npm run build && npm start`.
 - Day and night alternate every ~15 seconds (sun/moon icon in the HUD). At
   night the field darkens and zombies spawn twice as fast and move ~40%
   faster; at dawn it eases off again.
+- Killed zombies sometimes (20%) drop a heart. Walk into it to regain 1
+  health (up to 3). Drops blink and vanish after 12 seconds, and stay on the
+  ground if you're already at full health.
 
 ## Architecture
 
