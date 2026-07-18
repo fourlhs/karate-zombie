@@ -1,4 +1,9 @@
-import { ATTACK_DURATION, WORLD_HEIGHT, WORLD_WIDTH } from "./constants";
+import {
+  ATTACK_DURATION,
+  KICK_DURATION,
+  WORLD_HEIGHT,
+  WORLD_WIDTH,
+} from "./constants";
 import type { GameState, Player, Zombie } from "./types";
 import { getAttackHitbox, getNightFactor } from "./update";
 import {
@@ -10,10 +15,13 @@ import {
   HEART_FULL,
   MOON,
   PLAYER_DOWN,
+  PLAYER_DOWN_KICK,
   PLAYER_DOWN_PUNCH,
   PLAYER_SIDE,
+  PLAYER_SIDE_KICK,
   PLAYER_SIDE_PUNCH,
   PLAYER_UP,
+  PLAYER_UP_KICK,
   PLAYER_UP_PUNCH,
   SUN,
   TREE,
@@ -123,32 +131,48 @@ function getBackground(): HTMLCanvasElement {
 function drawAttackFlash(ctx: CanvasRenderingContext2D, player: Player): void {
   if (player.attack.activeTimer === 0) return;
 
+  const kicking = player.attack.kind === "kick";
   const hitbox = getAttackHitbox(player);
-  const strength = player.attack.activeTimer / ATTACK_DURATION;
-  ctx.fillStyle = `rgba(255, 255, 255, ${0.15 + 0.25 * strength})`;
+  const strength =
+    player.attack.activeTimer / (kicking ? KICK_DURATION : ATTACK_DURATION);
+  ctx.fillStyle = kicking
+    ? `rgba(255, 186, 80, ${0.2 + 0.25 * strength})`
+    : `rgba(255, 255, 255, ${0.15 + 0.25 * strength})`;
   ctx.fillRect(hitbox.x, hitbox.y, hitbox.w, hitbox.h);
 }
 
 function drawPlayer(ctx: CanvasRenderingContext2D, state: GameState): void {
   const player = state.player;
-  const punching = player.attack.activeTimer > 0;
+  const attacking = player.attack.activeTimer > 0;
+  const kicking = attacking && player.attack.kind === "kick";
   const walkFrame = player.moving ? Math.floor(state.elapsed * 8) % 2 : 0;
 
   let spr: Sprite;
   let flip = false;
   switch (player.facing) {
     case "up":
-      spr = punching ? PLAYER_UP_PUNCH : PLAYER_UP[walkFrame];
+      spr = kicking
+        ? PLAYER_UP_KICK
+        : attacking
+          ? PLAYER_UP_PUNCH
+          : PLAYER_UP[walkFrame];
       break;
     case "down":
-      spr = punching ? PLAYER_DOWN_PUNCH : PLAYER_DOWN[walkFrame];
+      spr = kicking
+        ? PLAYER_DOWN_KICK
+        : attacking
+          ? PLAYER_DOWN_PUNCH
+          : PLAYER_DOWN[walkFrame];
       break;
     case "left":
       flip = true;
-      spr = punching ? PLAYER_SIDE_PUNCH : PLAYER_SIDE[walkFrame];
-      break;
+    // fall through
     case "right":
-      spr = punching ? PLAYER_SIDE_PUNCH : PLAYER_SIDE[walkFrame];
+      spr = kicking
+        ? PLAYER_SIDE_KICK
+        : attacking
+          ? PLAYER_SIDE_PUNCH
+          : PLAYER_SIDE[walkFrame];
       break;
   }
   drawSprite(ctx, spr, player.pos.x, player.pos.y, SPRITE_SCALE, flip);
@@ -200,5 +224,5 @@ function drawHud(
 
   ctx.font = `10px ${hudFont}`;
   ctx.fillStyle = "rgba(20, 35, 12, 0.55)";
-  ctx.fillText("WASD MOVE · SPACE PUNCH", 16, WORLD_HEIGHT - 26);
+  ctx.fillText("WASD MOVE · SPACE PUNCH · K KICK", 16, WORLD_HEIGHT - 26);
 }

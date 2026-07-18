@@ -4,6 +4,10 @@ import {
   ATTACK_REACH,
   ATTACK_WIDTH,
   DAY_DURATION,
+  KICK_COOLDOWN,
+  KICK_DURATION,
+  KICK_REACH,
+  KICK_WIDTH,
   NIGHT_DURATION,
   NIGHT_FADE,
   NIGHT_SPAWN_FACTOR,
@@ -68,13 +72,23 @@ function updatePlayer(player: Player, input: InputState, dt: number): void {
 
   const attack = player.attack;
   attack.activeTimer = Math.max(0, attack.activeTimer - dt);
-  attack.cooldownTimer = Math.max(0, attack.cooldownTimer - dt);
+  attack.punchCooldown = Math.max(0, attack.punchCooldown - dt);
+  attack.kickCooldown = Math.max(0, attack.kickCooldown - dt);
 
-  const wantsAttack = input.attackQueued;
+  const wantsPunch = input.attackQueued;
+  const wantsKick = input.kickQueued;
   input.attackQueued = false;
-  if (wantsAttack && attack.cooldownTimer === 0) {
-    attack.activeTimer = ATTACK_DURATION;
-    attack.cooldownTimer = ATTACK_COOLDOWN;
+  input.kickQueued = false;
+  if (attack.activeTimer === 0) {
+    if (wantsKick && attack.kickCooldown === 0) {
+      attack.kind = "kick";
+      attack.activeTimer = KICK_DURATION;
+      attack.kickCooldown = KICK_COOLDOWN;
+    } else if (wantsPunch && attack.punchCooldown === 0) {
+      attack.kind = "punch";
+      attack.activeTimer = ATTACK_DURATION;
+      attack.punchCooldown = ATTACK_COOLDOWN;
+    }
   }
 }
 
@@ -82,25 +96,18 @@ function updatePlayer(player: Player, input: InputState, dt: number): void {
 export function getAttackHitbox(player: Player): Rect {
   const { x, y } = player.pos;
   const half = player.size / 2;
+  const kicking = player.attack.kind === "kick";
+  const reach = kicking ? KICK_REACH : ATTACK_REACH;
+  const width = kicking ? KICK_WIDTH : ATTACK_WIDTH;
   switch (player.facing) {
     case "up":
-      return {
-        x: x - ATTACK_WIDTH / 2,
-        y: y - half - ATTACK_REACH,
-        w: ATTACK_WIDTH,
-        h: ATTACK_REACH,
-      };
+      return { x: x - width / 2, y: y - half - reach, w: width, h: reach };
     case "down":
-      return { x: x - ATTACK_WIDTH / 2, y: y + half, w: ATTACK_WIDTH, h: ATTACK_REACH };
+      return { x: x - width / 2, y: y + half, w: width, h: reach };
     case "left":
-      return {
-        x: x - half - ATTACK_REACH,
-        y: y - ATTACK_WIDTH / 2,
-        w: ATTACK_REACH,
-        h: ATTACK_WIDTH,
-      };
+      return { x: x - half - reach, y: y - width / 2, w: reach, h: width };
     case "right":
-      return { x: x + half, y: y - ATTACK_WIDTH / 2, w: ATTACK_REACH, h: ATTACK_WIDTH };
+      return { x: x + half, y: y - width / 2, w: reach, h: width };
   }
 }
 

@@ -17,6 +17,12 @@ export const ATTACK_DURATION = 0.12;
 export const ATTACK_COOLDOWN = 0.35;
 export const SCORE_PER_ZOMBIE = 10;
 
+/** The kick reaches further and sweeps wider, but recharges much slower. */
+export const KICK_REACH = 80;
+export const KICK_WIDTH = 96;
+export const KICK_DURATION = 0.16;
+export const KICK_COOLDOWN = 1.1;
+
 export const ZOMBIE_RADIUS = 15;
 export const ZOMBIE_BASE_SPEED = 70;
 /** Random per-zombie speed variance, +/- this amount. */

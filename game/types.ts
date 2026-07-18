@@ -7,11 +7,17 @@ export interface Vector2 {
   y: number;
 }
 
+export type AttackKind = "punch" | "kick";
+
 export interface AttackState {
+  /** Which attack the active swing (or the last one) is. */
+  kind: AttackKind;
   /** Seconds the current swing remains active; 0 = not attacking. */
   activeTimer: number;
-  /** Seconds until the next swing is allowed; 0 = ready. */
-  cooldownTimer: number;
+  /** Seconds until the next punch is allowed; 0 = ready. */
+  punchCooldown: number;
+  /** Seconds until the next kick is allowed; 0 = ready. */
+  kickCooldown: number;
 }
 
 export interface Player {
@@ -51,6 +57,8 @@ export interface InputState {
   heldDirections: Direction[];
   /** Set on Space keydown, consumed by the update step. */
   attackQueued: boolean;
+  /** Set on K keydown, consumed by the update step. */
+  kickQueued: boolean;
 }
 
 /** Axis-aligned rectangle, used for the attack hitbox. */

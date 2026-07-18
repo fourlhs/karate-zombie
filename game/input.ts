@@ -25,6 +25,10 @@ export function attachInput(input: InputState): () => void {
       if (!e.repeat) {
         input.attackQueued = true;
       }
+      return;
+    }
+    if (e.code === "KeyK" && !e.repeat) {
+      input.kickQueued = true;
     }
   };
 

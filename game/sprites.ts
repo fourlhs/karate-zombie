@@ -205,6 +205,63 @@ export const PLAYER_SIDE_PUNCH = sprite("psp", [
   "....ss...ss.....",
 ]);
 
+export const PLAYER_DOWN_KICK = sprite("pdk", [
+  "....kkkkkkkk....",
+  "....rrrrrrrr....",
+  "....ssssssss....",
+  "....skssssks....",
+  ".....ssssss.....",
+  "....wwwwwwww....",
+  "...swwwwwwwws...",
+  "...swwwWWwwws...",
+  "....kkkkkkkk....",
+  "....kkkrrkkk....",
+  ".....ww..ww.....",
+  ".....ww..ww.....",
+  ".....ww..ww.....",
+  ".....ss..ww.....",
+  ".........ww.....",
+  ".........ss.....",
+]);
+
+export const PLAYER_UP_KICK = sprite("puk", [
+  "............ss..",
+  "....kkkkkkkkww..",
+  "....kkkkkkkkww..",
+  "....kkkkkkkkww..",
+  "....rrrrrrrrww..",
+  ".....ssssss.ww..",
+  "....wwwwwwwwww..",
+  "...swwwwwwwws...",
+  "....wwwwwwww....",
+  "....wwwwwwww....",
+  "....kkkkkkkk....",
+  "....kkkrrkkk....",
+  ".....ww.........",
+  ".....ww.........",
+  ".....ww.........",
+  "....ss..........",
+]);
+
+export const PLAYER_SIDE_KICK = sprite("psk", [
+  "................",
+  ".....kkkkkk.....",
+  "....kkkkkkkk....",
+  "....rrrrrrrr....",
+  "....ssssssks....",
+  ".....sssssss....",
+  "....wwwwwww.....",
+  "....wwwwwwws....",
+  "....wwwwwww.....",
+  "....wwwwww......",
+  "....kkkkkkk.....",
+  "....kkkkrkk.....",
+  ".....ww.wwwwwss.",
+  ".....ww.........",
+  ".....ww.........",
+  "....ss..........",
+]);
+
 // --- Zombies --------------------------------------------------------------
 
 export const ZOMBIE_DOWN = [

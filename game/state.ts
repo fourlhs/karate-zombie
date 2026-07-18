@@ -19,7 +19,12 @@ export function createInitialState(): GameState {
       moving: false,
       health: PLAYER_MAX_HEALTH,
       maxHealth: PLAYER_MAX_HEALTH,
-      attack: { activeTimer: 0, cooldownTimer: 0 },
+      attack: {
+        kind: "punch",
+        activeTimer: 0,
+        punchCooldown: 0,
+        kickCooldown: 0,
+      },
     },
     zombies: [],
     score: 0,
@@ -33,5 +38,6 @@ export function createInputState(): InputState {
   return {
     heldDirections: [],
     attackQueued: false,
+    kickQueued: false,
   };
 }
