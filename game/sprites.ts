@@ -370,6 +370,28 @@ export const TUFT = sprite("tuft", ["G.G", ".G.", "G.G"]);
 
 // --- HUD ------------------------------------------------------------------
 
+export const SUN = sprite("sun", [
+  "..yyyy..",
+  ".yyyyyy.",
+  "yyyyyyyy",
+  "yyyyyyyy",
+  "yyyyyyyy",
+  "yyyyyyyy",
+  ".yyyyyy.",
+  "..yyyy..",
+]);
+
+export const MOON = sprite("moon", [
+  "..wwww..",
+  ".wwwww..",
+  "wwwww...",
+  "wwww....",
+  "wwww....",
+  "wwwww...",
+  ".wwwww..",
+  "..wwww..",
+]);
+
 export const HEART_FULL = sprite("heart", [
   ".rr..rr.",
   "rrrrrrrr",

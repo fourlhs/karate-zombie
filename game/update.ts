@@ -3,6 +3,11 @@ import {
   ATTACK_DURATION,
   ATTACK_REACH,
   ATTACK_WIDTH,
+  DAY_DURATION,
+  NIGHT_DURATION,
+  NIGHT_FADE,
+  NIGHT_SPAWN_FACTOR,
+  NIGHT_SPEED_FACTOR,
   SCORE_PER_ZOMBIE,
   SPAWN_INTERVAL_MIN,
   SPAWN_INTERVAL_START,
@@ -120,10 +125,25 @@ function updateSpawning(state: GameState, dt: number): void {
   }
 }
 
+/** 0 = full day, 1 = full night, fading through dusk and dawn. */
+export function getNightFactor(elapsed: number): number {
+  const cycle = DAY_DURATION + NIGHT_DURATION;
+  const t = elapsed % cycle;
+  if (t < DAY_DURATION) {
+    // The first day has no night behind it to fade out from.
+    if (elapsed < cycle) return 0;
+    return Math.max(0, 1 - t / NIGHT_FADE);
+  }
+  return Math.min(1, (t - DAY_DURATION) / NIGHT_FADE);
+}
+
 /** Spawn interval shrinks linearly from start to min over the ramp duration. */
 function currentSpawnInterval(elapsed: number): number {
   const t = Math.min(elapsed / SPAWN_RAMP_DURATION, 1);
-  return SPAWN_INTERVAL_START + (SPAWN_INTERVAL_MIN - SPAWN_INTERVAL_START) * t;
+  const base =
+    SPAWN_INTERVAL_START + (SPAWN_INTERVAL_MIN - SPAWN_INTERVAL_START) * t;
+  // Nights spawn zombies faster.
+  return base * (1 + (NIGHT_SPAWN_FACTOR - 1) * getNightFactor(elapsed));
 }
 
 function createZombie(state: GameState): Zombie {
@@ -169,13 +189,16 @@ function createZombie(state: GameState): Zombie {
 
 function updateZombies(state: GameState, dt: number): void {
   const target = state.player.pos;
+  // Nights make every zombie faster; days calm them back down.
+  const nightBoost =
+    1 + (NIGHT_SPEED_FACTOR - 1) * getNightFactor(state.elapsed);
   for (const zombie of state.zombies) {
     const dx = target.x - zombie.pos.x;
     const dy = target.y - zombie.pos.y;
     const len = Math.hypot(dx, dy);
     if (len > 1e-4) {
-      zombie.pos.x += (dx / len) * zombie.speed * dt;
-      zombie.pos.y += (dy / len) * zombie.speed * dt;
+      zombie.pos.x += (dx / len) * zombie.speed * nightBoost * dt;
+      zombie.pos.y += (dy / len) * zombie.speed * nightBoost * dt;
     }
   }
 }

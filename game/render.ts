@@ -1,6 +1,6 @@
 import { ATTACK_DURATION, WORLD_HEIGHT, WORLD_WIDTH } from "./constants";
 import type { GameState, Player, Zombie } from "./types";
-import { getAttackHitbox } from "./update";
+import { getAttackHitbox, getNightFactor } from "./update";
 import {
   BUSH,
   type Sprite,
@@ -8,12 +8,14 @@ import {
   FLOWER,
   HEART_EMPTY,
   HEART_FULL,
+  MOON,
   PLAYER_DOWN,
   PLAYER_DOWN_PUNCH,
   PLAYER_SIDE,
   PLAYER_SIDE_PUNCH,
   PLAYER_UP,
   PLAYER_UP_PUNCH,
+  SUN,
   TREE,
   TUFT,
   ZOMBIE_DOWN,
@@ -38,7 +40,15 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState): void {
     drawZombie(ctx, zombie, state);
   }
   drawPlayer(ctx, state);
-  drawHud(ctx, state);
+
+  // Night falls over the whole scene, but never over the HUD.
+  const night = getNightFactor(state.elapsed);
+  if (night > 0) {
+    ctx.fillStyle = `rgba(16, 20, 62, ${0.48 * night})`;
+    ctx.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+  }
+
+  drawHud(ctx, state, night);
 }
 
 // --- Background -----------------------------------------------------------
@@ -166,7 +176,13 @@ function drawZombie(
 
 // --- HUD ------------------------------------------------------------------
 
-function drawHud(ctx: CanvasRenderingContext2D, state: GameState): void {
+function drawHud(
+  ctx: CanvasRenderingContext2D,
+  state: GameState,
+  night: number
+): void {
+  drawSprite(ctx, night > 0.5 ? MOON : SUN, WORLD_WIDTH / 2, 28, SPRITE_SCALE);
+
   ctx.font = `16px ${hudFont}`;
   ctx.textAlign = "left";
   ctx.textBaseline = "top";

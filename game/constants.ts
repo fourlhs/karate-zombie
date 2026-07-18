@@ -31,3 +31,13 @@ export const SPAWN_INTERVAL_START = 1.6;
 export const SPAWN_INTERVAL_MIN = 0.45;
 /** Seconds over which the spawn interval ramps from start to min. */
 export const SPAWN_RAMP_DURATION = 90;
+
+/** Day/night cycle: bright easy days, dark dangerous nights. */
+export const DAY_DURATION = 15;
+export const NIGHT_DURATION = 12;
+/** Seconds dusk and dawn take to fade in and out. */
+export const NIGHT_FADE = 2;
+/** At full night the spawn interval is multiplied by this (more zombies). */
+export const NIGHT_SPAWN_FACTOR = 0.5;
+/** At full night zombie speed is multiplied by this. */
+export const NIGHT_SPEED_FACTOR = 1.4;
