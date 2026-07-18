@@ -64,12 +64,16 @@ For a production build: `npm run build && npm start`.
 
 ## Mobile
 
-On touch devices the game shows a virtual joystick (drag to move in any
-direction) and four action buttons — punch, kick, dash, and special — with
-full multitouch, so you can steer and attack at the same time. The touch
-layer feeds the exact same input state the keyboard uses; the game core
-can't tell the difference. The canvas scales to fit any screen size and
-orientation, and desktop keeps plain WASD + Space with no touch UI.
+On touch devices the game shows a dynamic virtual joystick — touch anywhere
+on the left half and the stick appears under your thumb — plus four action
+buttons (punch, kick, dash, special) with full multitouch, so you can steer
+and attack at the same time. The touch layer feeds the exact same input
+state the keyboard uses; the game core can't tell the difference. The HUD
+scales up on touch screens for readability, controls respect notch/home-bar
+safe areas, a ⛶ button toggles fullscreen where the browser allows it, and
+the canvas fits any screen size and orientation (device pixel ratio capped
+at 2 to keep low-end phones smooth). Desktop keeps plain WASD + Space with
+no touch UI.
 
 ## Dev test mode
 
