@@ -62,6 +62,17 @@ For a production build: `npm run build && npm start`.
   a chiptune music loop (a 16-step sequencer) that speeds up with your combo.
   Like the art, there are no asset files.
 
+## Sharing & challenges
+
+The game-over screen has a share button (native share sheet on phones,
+copy-link on desktop) that produces a challenge link carrying `?beat=<score>`
+and `?by=<name>`. Opening one shows a "BEAT <NAME>'S <SCORE>!" callout and a
+TARGET line in the HUD; passing it triggers a celebration and the HUD flips
+to green. Your leaderboard name is remembered locally so submits and shared
+links are signed automatically, the death screen accepts a tap anywhere to
+retry, a new personal best rains confetti, and on Android kills and hits
+buzz the phone (`navigator.vibrate`).
+
 ## Mobile
 
 On touch devices the game shows a dynamic virtual joystick — touch anywhere
