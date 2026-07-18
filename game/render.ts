@@ -10,6 +10,7 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState): void {
     drawZombie(ctx, zombie, state.player);
   }
   drawPlayer(ctx, state.player);
+  drawHud(ctx, state);
 }
 
 function drawBackground(ctx: CanvasRenderingContext2D): void {
@@ -112,5 +113,43 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: Player): void {
   ctx.fillStyle = "#e0a878";
   ctx.beginPath();
   ctx.arc(fx, fy, 6, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawHud(ctx: CanvasRenderingContext2D, state: GameState): void {
+  ctx.fillStyle = "#f4f1e8";
+  ctx.font = "bold 22px 'Segoe UI', system-ui, sans-serif";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  ctx.fillText(`SCORE  ${state.score}`, 16, 14);
+
+  const { health, maxHealth } = state.player;
+  const heartSize = 22;
+  const spacing = 30;
+  for (let i = 0; i < maxHealth; i++) {
+    const hx = WORLD_WIDTH - 16 - (maxHealth - i) * spacing + spacing / 2;
+    drawHeart(ctx, hx, 18, heartSize, i < health);
+  }
+
+  ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
+  ctx.font = "14px 'Segoe UI', system-ui, sans-serif";
+  ctx.fillText("WASD move · SPACE attack", 16, WORLD_HEIGHT - 28);
+}
+
+function drawHeart(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  size: number,
+  filled: boolean
+): void {
+  const s = size / 2;
+  ctx.fillStyle = filled ? "#e5484d" : "rgba(255, 255, 255, 0.15)";
+  ctx.beginPath();
+  ctx.moveTo(x, y + s * 0.35);
+  ctx.arc(x - s * 0.5, y + s * 0.1, s * 0.55, Math.PI, 0);
+  ctx.arc(x + s * 0.5, y + s * 0.1, s * 0.55, Math.PI, 0);
+  ctx.lineTo(x, y + s * 1.2);
+  ctx.closePath();
   ctx.fill();
 }
