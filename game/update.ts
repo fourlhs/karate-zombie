@@ -35,6 +35,8 @@ export function update(state: GameState, input: InputState, dt: number): void {
   updatePlayer(state.player, input, dt);
   resolveAttackHits(state);
   updateSpawning(state, dt);
+  updateZombies(state, dt);
+  resolveContacts(state);
 }
 
 function updatePlayer(player: Player, input: InputState, dt: number): void {
@@ -162,6 +164,45 @@ function createZombie(state: GameState): Zombie {
     radius: ZOMBIE_RADIUS,
     speed,
   };
+}
+
+function updateZombies(state: GameState, dt: number): void {
+  const target = state.player.pos;
+  for (const zombie of state.zombies) {
+    const dx = target.x - zombie.pos.x;
+    const dy = target.y - zombie.pos.y;
+    const len = Math.hypot(dx, dy);
+    if (len > 1e-4) {
+      zombie.pos.x += (dx / len) * zombie.speed * dt;
+      zombie.pos.y += (dy / len) * zombie.speed * dt;
+    }
+  }
+}
+
+function resolveContacts(state: GameState): void {
+  const player = state.player;
+  const half = player.size / 2;
+  const playerRect: Rect = {
+    x: player.pos.x - half,
+    y: player.pos.y - half,
+    w: player.size,
+    h: player.size,
+  };
+
+  state.zombies = state.zombies.filter((zombie) => {
+    if (
+      circleRectOverlap(zombie.pos.x, zombie.pos.y, zombie.radius, playerRect)
+    ) {
+      player.health -= 1;
+      return false;
+    }
+    return true;
+  });
+
+  if (player.health <= 0) {
+    player.health = 0;
+    state.status = "gameover";
+  }
 }
 
 function circleRectOverlap(
