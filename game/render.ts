@@ -44,6 +44,7 @@ export function setHudFont(fontFamily: string): void {
 export function render(ctx: CanvasRenderingContext2D, state: GameState): void {
   ctx.drawImage(getBackground(), 0, 0, WORLD_WIDTH, WORLD_HEIGHT);
   drawAttackFlash(ctx, state.player);
+  drawDrops(ctx, state);
   for (const zombie of state.zombies) {
     drawZombie(ctx, zombie, state);
   }
@@ -139,6 +140,15 @@ function drawAttackFlash(ctx: CanvasRenderingContext2D, player: Player): void {
     ? `rgba(255, 186, 80, ${0.2 + 0.25 * strength})`
     : `rgba(255, 255, 255, ${0.15 + 0.25 * strength})`;
   ctx.fillRect(hitbox.x, hitbox.y, hitbox.w, hitbox.h);
+}
+
+function drawDrops(ctx: CanvasRenderingContext2D, state: GameState): void {
+  for (const drop of state.drops) {
+    // Blink through the last three seconds before fading away.
+    if (drop.ttl < 3 && Math.floor(state.elapsed * 6) % 2 === 0) continue;
+    const bob = Math.sin(state.elapsed * 4 + drop.id) * 3;
+    drawSprite(ctx, HEART_FULL, drop.pos.x, drop.pos.y + bob, SPRITE_SCALE);
+  }
 }
 
 function drawPlayer(ctx: CanvasRenderingContext2D, state: GameState): void {

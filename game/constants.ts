@@ -38,6 +38,12 @@ export const SPAWN_INTERVAL_MIN = 0.45;
 /** Seconds over which the spawn interval ramps from start to min. */
 export const SPAWN_RAMP_DURATION = 90;
 
+/** Chance a killed zombie leaves a health drop behind. */
+export const DROP_CHANCE = 0.2;
+/** Seconds a drop stays on the ground, and its pickup radius. */
+export const DROP_TTL = 12;
+export const DROP_RADIUS = 14;
+
 /** Day/night cycle: bright easy days, dark dangerous nights. */
 export const DAY_DURATION = 15;
 export const NIGHT_DURATION = 12;

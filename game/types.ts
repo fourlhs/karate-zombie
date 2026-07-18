@@ -40,16 +40,25 @@ export interface Zombie {
   speed: number;
 }
 
+export interface HealthDrop {
+  id: number;
+  pos: Vector2;
+  /** Seconds until the drop disappears. */
+  ttl: number;
+}
+
 export interface GameState {
   status: GameStatus;
   player: Player;
   zombies: Zombie[];
+  drops: HealthDrop[];
   score: number;
   /** Seconds since the run started; drives the difficulty ramp. */
   elapsed: number;
   /** Seconds until the next zombie spawns. */
   spawnTimer: number;
-  nextZombieId: number;
+  /** Shared id counter for zombies and drops. */
+  nextId: number;
 }
 
 export interface InputState {

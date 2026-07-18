@@ -4,6 +4,9 @@ import {
   ATTACK_REACH,
   ATTACK_WIDTH,
   DAY_DURATION,
+  DROP_CHANCE,
+  DROP_RADIUS,
+  DROP_TTL,
   KICK_COOLDOWN,
   KICK_DURATION,
   KICK_REACH,
@@ -45,6 +48,7 @@ export function update(state: GameState, input: InputState, dt: number): void {
   resolveAttackHits(state);
   updateSpawning(state, dt);
   updateZombies(state, dt);
+  updateDrops(state, dt);
   resolveContacts(state);
 }
 
@@ -118,6 +122,39 @@ function resolveAttackHits(state: GameState): void {
   state.zombies = state.zombies.filter((zombie) => {
     if (circleRectOverlap(zombie.pos.x, zombie.pos.y, zombie.radius, hitbox)) {
       state.score += SCORE_PER_ZOMBIE;
+      if (Math.random() < DROP_CHANCE) {
+        state.drops.push({
+          id: state.nextId++,
+          pos: { ...zombie.pos },
+          ttl: DROP_TTL,
+        });
+      }
+      return false;
+    }
+    return true;
+  });
+}
+
+/** Ages drops away and heals the player when they walk into one. */
+function updateDrops(state: GameState, dt: number): void {
+  const player = state.player;
+  const half = player.size / 2;
+  const playerRect: Rect = {
+    x: player.pos.x - half,
+    y: player.pos.y - half,
+    w: player.size,
+    h: player.size,
+  };
+
+  state.drops = state.drops.filter((drop) => {
+    drop.ttl -= dt;
+    if (drop.ttl <= 0) return false;
+    // A full-health player leaves the heart on the ground for later.
+    if (
+      player.health < player.maxHealth &&
+      circleRectOverlap(drop.pos.x, drop.pos.y, DROP_RADIUS, playerRect)
+    ) {
+      player.health += 1;
       return false;
     }
     return true;
@@ -187,7 +224,7 @@ function createZombie(state: GameState): Zombie {
   }
 
   return {
-    id: state.nextZombieId++,
+    id: state.nextId++,
     pos: { x, y },
     radius: ZOMBIE_RADIUS,
     speed,

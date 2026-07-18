@@ -27,10 +27,11 @@ export function createInitialState(): GameState {
       },
     },
     zombies: [],
+    drops: [],
     score: 0,
     elapsed: 0,
     spawnTimer: SPAWN_INTERVAL_START,
-    nextZombieId: 1,
+    nextId: 1,
   };
 }
 
