@@ -43,7 +43,7 @@ export const SOUND_KEY = "karate-zombies-sound";
 
 /** Boss zombie: spawns at the start of every Nth night. */
 export const BOSS_EVERY_N_NIGHTS = 2;
-export const BOSS_HP = 5;
+export const BOSS_HP = 4;
 export const BOSS_RADIUS = 30;
 export const BOSS_SPEED = 55;
 export const BOSS_SCORE = 100;
