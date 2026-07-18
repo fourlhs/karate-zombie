@@ -37,6 +37,7 @@ game/state.ts         createInitialState() — also used by the restart button
 game/input.ts         Keyboard listeners → InputState (with cleanup function)
 game/update.ts        Simulation step: movement, attack, spawning, collisions
 game/render.ts        Pure drawing: reads state, paints one frame + HUD
+game/sprites.ts       Hand-made pixel art (karateka, zombies, scenery, hearts)
 ```
 
 **Game loop.** `Game.tsx` runs a `requestAnimationFrame` loop. Each frame it
@@ -56,7 +57,14 @@ kills (circle-vs-rect overlap), edge spawning with the difficulty ramp,
 zombie homing, and zombie-vs-player contact damage.
 
 **Render.** `render()` never changes state — it just draws the current frame:
-background grid, attack flash, zombies, player, and the HUD (score + hearts).
+grass background, attack flash, zombies, player, and the HUD (score + hearts).
+
+**Sprites.** All art is hand-made pixel art defined in code — each sprite is a
+small grid of palette characters in `game/sprites.ts`, rasterized once to a
+tiny offscreen canvas and drawn scaled-up with image smoothing disabled for
+crisp pixels. The karateka has walk and punch frames per facing, zombies have
+a two-frame shamble, and the grass field (stripes, tufts, flowers, bushes,
+trees) is composed once into an offscreen canvas at startup. No image files.
 
 **Input.** Keydown/keyup listeners maintain the set of held movement keys in
 press order (so facing = the most recently pressed key still held) and an
