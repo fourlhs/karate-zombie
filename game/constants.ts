@@ -73,6 +73,16 @@ export const SHAKE_HIT_MAGNITUDE = 8;
 export const SHAKE_KILL_DURATION = 0.1;
 export const SHAKE_KILL_MAGNITUDE = 3;
 
+/** Dawn upgrades: pick one at the start of each day (after night 1). */
+export const UPGRADE_DAMAGE_INC = 1;
+export const UPGRADE_COOLDOWN_FACTOR = 0.75;
+export const UPGRADE_COOLDOWN_MIN = 0.4;
+/** Tough zombies: +1 hp every N days survived, capped. */
+export const ZOMBIE_HP_PER_DAYS = 2;
+export const ZOMBIE_HP_MAX = 3;
+/** Post-hit invulnerability for multi-hp zombies (one hit per swing). */
+export const ZOMBIE_HURT_TIME = 0.2;
+
 /** Chance a killed zombie leaves a health drop behind. */
 export const DROP_CHANCE = 0.2;
 /** Seconds a drop stays on the ground, and its pickup radius. */

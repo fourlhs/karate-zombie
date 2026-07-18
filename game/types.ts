@@ -35,14 +35,25 @@ export interface Player {
   dashDir: Vector2;
   health: number;
   maxHealth: number;
+  /** Damage per landed swing; raised by dawn upgrades. */
+  damage: number;
+  /** Multiplier on attack cooldowns; lowered by dawn upgrades. */
+  cooldownFactor: number;
   attack: AttackState;
 }
+
+export type UpgradeKind = "damage" | "speed" | "health";
 
 export interface Zombie {
   id: number;
   pos: Vector2;
   radius: number;
   speed: number;
+  /** Later days spawn tougher zombies with more than 1 hp. */
+  hp: number;
+  maxHp: number;
+  /** Post-hit invulnerability; also drives the hurt flash. */
+  hurtTimer: number;
 }
 
 export type SoundEffect =
@@ -102,6 +113,8 @@ export interface GameState {
   boss: Boss | null;
   /** Night number that last spawned a boss, so each boss night spawns one. */
   lastBossNight: number;
+  /** Set at dawn; the shell pauses and offers an upgrade pick. */
+  pendingUpgrade: boolean;
   drops: HealthDrop[];
   popups: ScorePopup[];
   /** Sound events queued by the update step; drained and played by the shell. */

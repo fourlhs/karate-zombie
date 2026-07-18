@@ -29,6 +29,8 @@ export function createInitialState(): GameState {
       dashDir: { x: 0, y: 1 },
       health: PLAYER_MAX_HEALTH,
       maxHealth: PLAYER_MAX_HEALTH,
+      damage: 1,
+      cooldownFactor: 1,
       attack: {
         kind: "punch",
         activeTimer: 0,
@@ -39,6 +41,7 @@ export function createInitialState(): GameState {
     zombies: [],
     boss: null,
     lastBossNight: 0,
+    pendingUpgrade: false,
     drops: [],
     popups: [],
     sounds: [],

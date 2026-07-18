@@ -12,8 +12,14 @@ import {
 import { attachInput } from "@/game/input";
 import { render, setHudFont } from "@/game/render";
 import { createInitialState, createInputState } from "@/game/state";
-import type { GameState, InputState } from "@/game/types";
-import { update } from "@/game/update";
+import type { GameState, InputState, UpgradeKind } from "@/game/types";
+import { applyUpgrade, update } from "@/game/update";
+
+const UPGRADES: Array<[UpgradeKind, string, string]> = [
+  ["damage", "+1 DAMAGE", "Punches and kicks hit harder"],
+  ["speed", "FASTER ATTACKS", "25% shorter attack cooldowns"],
+  ["health", "+1 HEART", "Max health up, and heal one"],
+];
 
 const CONTROLS: Array<[string, string]> = [
   ["WASD", "Move"],
@@ -39,10 +45,12 @@ export default function Game() {
   }>({ visible: false, score: 0, best: 0, isNewBest: false });
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const upgradeShownRef = useRef(false);
 
   useEffect(() => {
-    pausedRef.current = settingsOpen;
-  }, [settingsOpen]);
+    pausedRef.current = settingsOpen || upgradeOpen;
+  }, [settingsOpen, upgradeOpen]);
 
   // Hydrate the persisted sound preference after mount (SSR has no storage).
   useEffect(() => {
@@ -98,6 +106,11 @@ export default function Game() {
       }
       render(ctx, state);
 
+      if (state.pendingUpgrade && !upgradeShownRef.current) {
+        upgradeShownRef.current = true;
+        setUpgradeOpen(true);
+      }
+
       if (state.status === "gameover" && !gameOverReportedRef.current) {
         gameOverReportedRef.current = true;
         const isNewBest = state.score > state.highScore;
@@ -126,7 +139,15 @@ export default function Game() {
   const restart = useCallback(() => {
     stateRef.current = createInitialState();
     gameOverReportedRef.current = false;
+    upgradeShownRef.current = false;
+    setUpgradeOpen(false);
     setOverlay({ visible: false, score: 0, best: 0, isNewBest: false });
+  }, []);
+
+  const pickUpgrade = useCallback((kind: UpgradeKind) => {
+    applyUpgrade(stateRef.current, kind);
+    upgradeShownRef.current = false;
+    setUpgradeOpen(false);
   }, []);
 
   // Dev-only test hook: ?test=1 exposes live state so test drivers can read
@@ -199,6 +220,25 @@ export default function Game() {
           <button type="button" onClick={restart} autoFocus>
             Restart
           </button>
+        </div>
+      )}
+      {upgradeOpen && !settingsOpen && (
+        <div className="upgrade">
+          <h1>DAWN</h1>
+          <p className="tip">You survived the night. Choose an upgrade:</p>
+          <div className="upgrade-cards">
+            {UPGRADES.map(([kind, title, description]) => (
+              <button
+                type="button"
+                key={kind}
+                className="upgrade-card"
+                onClick={() => pickUpgrade(kind)}
+              >
+                <span className="upgrade-title">{title}</span>
+                <span className="upgrade-desc">{description}</span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
       {settingsOpen && (

@@ -266,7 +266,22 @@ function drawZombie(
   } else {
     spr = dy > 0 ? ZOMBIE_DOWN[frame] : ZOMBIE_UP[frame];
   }
-  drawSprite(ctx, spr, zombie.pos.x, zombie.pos.y, SPRITE_SCALE, flip);
+  // Post-hit flash for tough zombies that survived a swing.
+  const flashing =
+    zombie.hurtTimer > 0 && Math.floor(state.elapsed * 30) % 2 === 0;
+  if (!flashing) {
+    drawSprite(ctx, spr, zombie.pos.x, zombie.pos.y, SPRITE_SCALE, flip);
+  }
+
+  if (zombie.maxHp > 1) {
+    const barW = 22;
+    const barX = zombie.pos.x - barW / 2;
+    const barY = zombie.pos.y - 30;
+    ctx.fillStyle = "rgba(20, 20, 26, 0.7)";
+    ctx.fillRect(barX - 1, barY - 1, barW + 2, 5);
+    ctx.fillStyle = "#e5484d";
+    ctx.fillRect(barX, barY, (barW * zombie.hp) / zombie.maxHp, 3);
+  }
 }
 
 function drawBoss(ctx: CanvasRenderingContext2D, state: GameState): void {

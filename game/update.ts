@@ -37,6 +37,12 @@ import {
   SHAKE_HIT_MAGNITUDE,
   SHAKE_KILL_DURATION,
   SHAKE_KILL_MAGNITUDE,
+  UPGRADE_COOLDOWN_FACTOR,
+  UPGRADE_COOLDOWN_MIN,
+  UPGRADE_DAMAGE_INC,
+  ZOMBIE_HP_MAX,
+  ZOMBIE_HP_PER_DAYS,
+  ZOMBIE_HURT_TIME,
   SPAWN_INTERVAL_MIN,
   SPAWN_INTERVAL_START,
   SPAWN_MARGIN,
@@ -55,6 +61,7 @@ import type {
   InputState,
   Player,
   Rect,
+  UpgradeKind,
   Vector2,
   Zombie,
 } from "./types";
@@ -73,7 +80,13 @@ export function update(state: GameState, input: InputState, dt: number): void {
     return;
   }
 
+  const cycle = DAY_DURATION + NIGHT_DURATION;
+  const prevDay = Math.floor(state.elapsed / cycle);
   state.elapsed += dt;
+  // Dawn: surviving a full night earns an upgrade pick (shell pauses for it).
+  if (Math.floor(state.elapsed / cycle) > prevDay) {
+    state.pendingUpgrade = true;
+  }
   updatePlayer(state, input, dt);
   resolveAttackHits(state);
   updateSpawning(state, dt);
@@ -246,12 +259,12 @@ function updatePlayer(state: GameState, input: InputState, dt: number): void {
     if (wantsKick && attack.kickCooldown === 0) {
       attack.kind = "kick";
       attack.activeTimer = KICK_DURATION;
-      attack.kickCooldown = KICK_COOLDOWN;
+      attack.kickCooldown = KICK_COOLDOWN * player.cooldownFactor;
       state.sounds.push("kick");
     } else if (wantsPunch && attack.punchCooldown === 0) {
       attack.kind = "punch";
       attack.activeTimer = ATTACK_DURATION;
-      attack.punchCooldown = ATTACK_COOLDOWN;
+      attack.punchCooldown = ATTACK_COOLDOWN * player.cooldownFactor;
       state.sounds.push("punch");
     }
   }
@@ -279,30 +292,19 @@ export function getAttackHitbox(player: Player): Rect {
 function resolveAttackHits(state: GameState): void {
   if (state.player.attack.activeTimer === 0) return;
 
-  const hitbox = getAttackHitbox(state.player);
+  const player = state.player;
+  const hitbox = getAttackHitbox(player);
   state.zombies = state.zombies.filter((zombie) => {
-    if (circleRectOverlap(zombie.pos.x, zombie.pos.y, zombie.radius, hitbox)) {
-      state.combo = state.comboTimer > 0 ? state.combo + 1 : 1;
-      state.comboTimer = COMBO_WINDOW;
-      const gained =
-        SCORE_PER_ZOMBIE * Math.min(state.combo, COMBO_MAX_MULT);
-      state.score += gained;
-      state.popups.push({
-        id: state.nextId++,
-        pos: { ...zombie.pos },
-        text: `+${gained}`,
-        ttl: POPUP_TTL,
-      });
-      triggerShake(state, SHAKE_KILL_MAGNITUDE, SHAKE_KILL_DURATION);
-      state.sounds.push("kill");
-      if (Math.random() < DROP_CHANCE) {
-        state.drops.push({
-          id: state.nextId++,
-          pos: { ...zombie.pos },
-          ttl: DROP_TTL,
-        });
+    if (
+      zombie.hurtTimer === 0 &&
+      circleRectOverlap(zombie.pos.x, zombie.pos.y, zombie.radius, hitbox)
+    ) {
+      zombie.hp -= player.damage;
+      if (zombie.hp <= 0) {
+        registerKill(state, zombie);
+        return false;
       }
-      return false;
+      zombie.hurtTimer = ZOMBIE_HURT_TIME;
     }
     return true;
   });
@@ -314,7 +316,7 @@ function resolveAttackHits(state: GameState): void {
     boss.hurtTimer === 0 &&
     circleRectOverlap(boss.pos.x, boss.pos.y, boss.radius, hitbox)
   ) {
-    boss.hp -= 1;
+    boss.hp -= player.damage;
     boss.hurtTimer = BOSS_HURT_TIME;
     if (boss.hp <= 0) {
       state.score += BOSS_SCORE;
@@ -338,6 +340,47 @@ function resolveAttackHits(state: GameState): void {
       state.sounds.push("bossHit");
     }
   }
+}
+
+/** Score, combo, popup, shake, sound, and maybe a heart for one dead zombie. */
+function registerKill(state: GameState, zombie: Zombie): void {
+  state.combo = state.comboTimer > 0 ? state.combo + 1 : 1;
+  state.comboTimer = COMBO_WINDOW;
+  const gained = SCORE_PER_ZOMBIE * Math.min(state.combo, COMBO_MAX_MULT);
+  state.score += gained;
+  state.popups.push({
+    id: state.nextId++,
+    pos: { ...zombie.pos },
+    text: `+${gained}`,
+    ttl: POPUP_TTL,
+  });
+  triggerShake(state, SHAKE_KILL_MAGNITUDE, SHAKE_KILL_DURATION);
+  state.sounds.push("kill");
+  if (Math.random() < DROP_CHANCE) {
+    state.drops.push({
+      id: state.nextId++,
+      pos: { ...zombie.pos },
+      ttl: DROP_TTL,
+    });
+  }
+}
+
+/** Applies a dawn upgrade pick and clears the pending flag. */
+export function applyUpgrade(state: GameState, kind: UpgradeKind): void {
+  const player = state.player;
+  if (kind === "damage") {
+    player.damage += UPGRADE_DAMAGE_INC;
+  } else if (kind === "speed") {
+    player.cooldownFactor = Math.max(
+      UPGRADE_COOLDOWN_MIN,
+      player.cooldownFactor * UPGRADE_COOLDOWN_FACTOR
+    );
+  } else {
+    player.maxHealth += 1;
+    player.health = Math.min(player.health + 1, player.maxHealth);
+  }
+  state.pendingUpgrade = false;
+  state.sounds.push("pickup");
 }
 
 /** Ages drops away and heals the player when they walk into one. */
@@ -421,11 +464,22 @@ function createZombie(state: GameState): Zombie {
     (Math.random() * 2 - 1) * ZOMBIE_SPEED_VARIANCE +
     speedRamp;
 
+  // Later days spawn tougher zombies so damage upgrades stay meaningful.
+  const day =
+    Math.floor(state.elapsed / (DAY_DURATION + NIGHT_DURATION)) + 1;
+  const hp = Math.min(
+    ZOMBIE_HP_MAX,
+    1 + Math.floor((day - 1) / ZOMBIE_HP_PER_DAYS)
+  );
+
   return {
     id: state.nextId++,
     pos: pickEdgeSpawn(),
     radius: ZOMBIE_RADIUS,
     speed,
+    hp,
+    maxHp: hp,
+    hurtTimer: 0,
   };
 }
 
@@ -435,6 +489,7 @@ function updateZombies(state: GameState, dt: number): void {
   const nightBoost =
     1 + (NIGHT_SPEED_FACTOR - 1) * getNightFactor(state.elapsed);
   for (const zombie of state.zombies) {
+    zombie.hurtTimer = Math.max(0, zombie.hurtTimer - dt);
     const dx = target.x - zombie.pos.x;
     const dy = target.y - zombie.pos.y;
     const len = Math.hypot(dx, dy);
