@@ -41,6 +41,7 @@ export function createInitialState(): GameState {
     lastBossNight: 0,
     drops: [],
     popups: [],
+    sounds: [],
     score: 0,
     highScore: loadHighScore(),
     combo: 0,

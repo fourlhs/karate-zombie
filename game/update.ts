@@ -74,7 +74,7 @@ export function update(state: GameState, input: InputState, dt: number): void {
   }
 
   state.elapsed += dt;
-  updatePlayer(state.player, input, dt);
+  updatePlayer(state, input, dt);
   resolveAttackHits(state);
   updateSpawning(state, dt);
   updateZombies(state, dt);
@@ -190,7 +190,8 @@ function triggerShake(
   }
 }
 
-function updatePlayer(player: Player, input: InputState, dt: number): void {
+function updatePlayer(state: GameState, input: InputState, dt: number): void {
+  const player = state.player;
   const held = input.heldDirections;
   let dx = 0;
   let dy = 0;
@@ -212,6 +213,7 @@ function updatePlayer(player: Player, input: InputState, dt: number): void {
         : { ...FACING_VECTORS[player.facing] };
     player.dashTimer = DASH_DURATION;
     player.dashCooldown = DASH_COOLDOWN;
+    state.sounds.push("dash");
   }
 
   player.moving = dx !== 0 || dy !== 0;
@@ -245,10 +247,12 @@ function updatePlayer(player: Player, input: InputState, dt: number): void {
       attack.kind = "kick";
       attack.activeTimer = KICK_DURATION;
       attack.kickCooldown = KICK_COOLDOWN;
+      state.sounds.push("kick");
     } else if (wantsPunch && attack.punchCooldown === 0) {
       attack.kind = "punch";
       attack.activeTimer = ATTACK_DURATION;
       attack.punchCooldown = ATTACK_COOLDOWN;
+      state.sounds.push("punch");
     }
   }
 }
@@ -290,6 +294,7 @@ function resolveAttackHits(state: GameState): void {
         ttl: POPUP_TTL,
       });
       triggerShake(state, SHAKE_KILL_MAGNITUDE, SHAKE_KILL_DURATION);
+      state.sounds.push("kill");
       if (Math.random() < DROP_CHANCE) {
         state.drops.push({
           id: state.nextId++,
@@ -326,9 +331,11 @@ function resolveAttackHits(state: GameState): void {
         ttl: DROP_TTL,
       });
       triggerShake(state, SHAKE_HIT_MAGNITUDE, SHAKE_HIT_DURATION);
+      state.sounds.push("bossDie");
       state.boss = null;
     } else {
       triggerShake(state, SHAKE_KILL_MAGNITUDE, SHAKE_KILL_DURATION);
+      state.sounds.push("bossHit");
     }
   }
 }
@@ -353,6 +360,7 @@ function updateDrops(state: GameState, dt: number): void {
       circleRectOverlap(drop.pos.x, drop.pos.y, DROP_RADIUS, playerRect)
     ) {
       player.health += 1;
+      state.sounds.push("pickup");
       return false;
     }
     return true;
@@ -465,11 +473,13 @@ function damagePlayer(state: GameState): void {
   const player = state.player;
   player.health -= 1;
   triggerShake(state, SHAKE_HIT_MAGNITUDE, SHAKE_HIT_DURATION);
+  state.sounds.push("hurt");
   state.combo = 0;
   state.comboTimer = 0;
   if (player.health <= 0) {
     player.health = 0;
     state.status = "gameover";
+    state.sounds.push("gameOver");
   }
 }
 

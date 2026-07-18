@@ -45,6 +45,17 @@ export interface Zombie {
   speed: number;
 }
 
+export type SoundEffect =
+  | "punch"
+  | "kick"
+  | "dash"
+  | "kill"
+  | "hurt"
+  | "pickup"
+  | "bossHit"
+  | "bossDie"
+  | "gameOver";
+
 export type BossPhase = "walk" | "windup" | "lunge";
 
 export interface Boss {
@@ -93,6 +104,8 @@ export interface GameState {
   lastBossNight: number;
   drops: HealthDrop[];
   popups: ScorePopup[];
+  /** Sound events queued by the update step; drained and played by the shell. */
+  sounds: SoundEffect[];
   score: number;
   /** Best score from previous runs, loaded from localStorage. */
   highScore: number;

@@ -39,6 +39,7 @@ export const SPAWN_INTERVAL_MIN = 0.45;
 export const SPAWN_RAMP_DURATION = 90;
 
 export const HIGH_SCORE_KEY = "karate-zombies-high-score";
+export const SOUND_KEY = "karate-zombies-sound";
 
 /** Boss zombie: spawns at the start of every Nth night. */
 export const BOSS_EVERY_N_NIGHTS = 2;
