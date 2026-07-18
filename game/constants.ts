@@ -40,6 +40,21 @@ export const SPAWN_RAMP_DURATION = 90;
 
 export const HIGH_SCORE_KEY = "karate-zombies-high-score";
 
+/** Boss zombie: spawns at the start of every Nth night. */
+export const BOSS_EVERY_N_NIGHTS = 2;
+export const BOSS_HP = 5;
+export const BOSS_RADIUS = 30;
+export const BOSS_SPEED = 55;
+export const BOSS_SCORE = 100;
+/** Boss attack cycle: walk, telegraphed windup, then a fast lunge. */
+export const BOSS_WALK_TIME = 3;
+export const BOSS_WINDUP_TIME = 0.8;
+export const BOSS_LUNGE_TIME = 0.45;
+export const BOSS_LUNGE_SPEED = 430;
+/** Min seconds between boss contact hits, and its post-hit invulnerability. */
+export const BOSS_CONTACT_COOLDOWN = 1.2;
+export const BOSS_HURT_TIME = 0.25;
+
 /** Dash: a quick burst on Shift with brief invulnerability. */
 export const DASH_SPEED = 800;
 export const DASH_DURATION = 0.18;

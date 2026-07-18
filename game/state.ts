@@ -37,6 +37,8 @@ export function createInitialState(): GameState {
       },
     },
     zombies: [],
+    boss: null,
+    lastBossNight: 0,
     drops: [],
     popups: [],
     score: 0,

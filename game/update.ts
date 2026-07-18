@@ -3,6 +3,17 @@ import {
   ATTACK_DURATION,
   ATTACK_REACH,
   ATTACK_WIDTH,
+  BOSS_CONTACT_COOLDOWN,
+  BOSS_EVERY_N_NIGHTS,
+  BOSS_HP,
+  BOSS_HURT_TIME,
+  BOSS_LUNGE_SPEED,
+  BOSS_LUNGE_TIME,
+  BOSS_RADIUS,
+  BOSS_SCORE,
+  BOSS_SPEED,
+  BOSS_WALK_TIME,
+  BOSS_WINDUP_TIME,
   COMBO_MAX_MULT,
   COMBO_WINDOW,
   DASH_COOLDOWN,
@@ -67,9 +78,92 @@ export function update(state: GameState, input: InputState, dt: number): void {
   resolveAttackHits(state);
   updateSpawning(state, dt);
   updateZombies(state, dt);
+  updateBoss(state, dt);
   updateDrops(state, dt);
   resolveContacts(state);
   updateEffects(state, dt);
+}
+
+/** Spawns the boss on schedule and runs its walk/windup/lunge cycle. */
+function updateBoss(state: GameState, dt: number): void {
+  const cycle = DAY_DURATION + NIGHT_DURATION;
+  const nightNumber = Math.floor(state.elapsed / cycle) + 1;
+  const isNight = state.elapsed % cycle >= DAY_DURATION;
+  if (
+    !state.boss &&
+    isNight &&
+    nightNumber % BOSS_EVERY_N_NIGHTS === 0 &&
+    state.lastBossNight !== nightNumber
+  ) {
+    state.lastBossNight = nightNumber;
+    state.boss = {
+      pos: pickEdgeSpawn(),
+      radius: BOSS_RADIUS,
+      hp: BOSS_HP,
+      maxHp: BOSS_HP,
+      phase: "walk",
+      phaseTimer: BOSS_WALK_TIME,
+      lungeDir: { x: 0, y: 1 },
+      contactCooldown: 0,
+      hurtTimer: 0,
+    };
+  }
+
+  const boss = state.boss;
+  if (!boss) return;
+
+  boss.contactCooldown = Math.max(0, boss.contactCooldown - dt);
+  boss.hurtTimer = Math.max(0, boss.hurtTimer - dt);
+  boss.phaseTimer -= dt;
+
+  const player = state.player;
+  const dx = player.pos.x - boss.pos.x;
+  const dy = player.pos.y - boss.pos.y;
+  const len = Math.hypot(dx, dy) || 1;
+
+  switch (boss.phase) {
+    case "walk":
+      boss.pos.x += (dx / len) * BOSS_SPEED * dt;
+      boss.pos.y += (dy / len) * BOSS_SPEED * dt;
+      if (boss.phaseTimer <= 0) {
+        boss.phase = "windup";
+        boss.phaseTimer = BOSS_WINDUP_TIME;
+      }
+      break;
+    case "windup":
+      // Stands still, telegraphing; aims at where you are when it fires.
+      if (boss.phaseTimer <= 0) {
+        boss.lungeDir = { x: dx / len, y: dy / len };
+        boss.phase = "lunge";
+        boss.phaseTimer = BOSS_LUNGE_TIME;
+      }
+      break;
+    case "lunge":
+      boss.pos.x += boss.lungeDir.x * BOSS_LUNGE_SPEED * dt;
+      boss.pos.y += boss.lungeDir.y * BOSS_LUNGE_SPEED * dt;
+      if (boss.phaseTimer <= 0) {
+        boss.phase = "walk";
+        boss.phaseTimer = BOSS_WALK_TIME;
+      }
+      break;
+  }
+  // A lunge can overshoot, but never carries the boss far off-screen.
+  boss.pos.x = clamp(boss.pos.x, -60, WORLD_WIDTH + 60);
+  boss.pos.y = clamp(boss.pos.y, -60, WORLD_HEIGHT + 60);
+
+  if (player.dashTimer === 0 && boss.contactCooldown === 0) {
+    const half = player.size / 2;
+    const playerRect: Rect = {
+      x: player.pos.x - half,
+      y: player.pos.y - half,
+      w: player.size,
+      h: player.size,
+    };
+    if (circleRectOverlap(boss.pos.x, boss.pos.y, boss.radius, playerRect)) {
+      boss.contactCooldown = BOSS_CONTACT_COOLDOWN;
+      damagePlayer(state);
+    }
+  }
 }
 
 /** Ticks down combo, popup, and shake timers. */
@@ -207,6 +301,36 @@ function resolveAttackHits(state: GameState): void {
     }
     return true;
   });
+
+  // The boss is a bigger target with health; one hit per swing.
+  const boss = state.boss;
+  if (
+    boss &&
+    boss.hurtTimer === 0 &&
+    circleRectOverlap(boss.pos.x, boss.pos.y, boss.radius, hitbox)
+  ) {
+    boss.hp -= 1;
+    boss.hurtTimer = BOSS_HURT_TIME;
+    if (boss.hp <= 0) {
+      state.score += BOSS_SCORE;
+      state.popups.push({
+        id: state.nextId++,
+        pos: { ...boss.pos },
+        text: `+${BOSS_SCORE}`,
+        ttl: POPUP_TTL,
+      });
+      // A boss always leaves a heart behind.
+      state.drops.push({
+        id: state.nextId++,
+        pos: { ...boss.pos },
+        ttl: DROP_TTL,
+      });
+      triggerShake(state, SHAKE_HIT_MAGNITUDE, SHAKE_HIT_DURATION);
+      state.boss = null;
+    } else {
+      triggerShake(state, SHAKE_KILL_MAGNITUDE, SHAKE_KILL_DURATION);
+    }
+  }
 }
 
 /** Ages drops away and heals the player when they walk into one. */
@@ -264,6 +388,21 @@ function currentSpawnInterval(elapsed: number): number {
   return base * (1 + (NIGHT_SPAWN_FACTOR - 1) * getNightFactor(elapsed));
 }
 
+/** A random point along a random edge, just off-screen. */
+function pickEdgeSpawn(): Vector2 {
+  const edge = Math.floor(Math.random() * 4);
+  switch (edge) {
+    case 0: // top
+      return { x: Math.random() * WORLD_WIDTH, y: -SPAWN_MARGIN };
+    case 1: // bottom
+      return { x: Math.random() * WORLD_WIDTH, y: WORLD_HEIGHT + SPAWN_MARGIN };
+    case 2: // left
+      return { x: -SPAWN_MARGIN, y: Math.random() * WORLD_HEIGHT };
+    default: // right
+      return { x: WORLD_WIDTH + SPAWN_MARGIN, y: Math.random() * WORLD_HEIGHT };
+  }
+}
+
 function createZombie(state: GameState): Zombie {
   const speedRamp = Math.min(
     state.elapsed * ZOMBIE_SPEED_RAMP,
@@ -274,32 +413,9 @@ function createZombie(state: GameState): Zombie {
     (Math.random() * 2 - 1) * ZOMBIE_SPEED_VARIANCE +
     speedRamp;
 
-  // Pick a random edge and a random point along it, just off-screen.
-  const edge = Math.floor(Math.random() * 4);
-  let x: number;
-  let y: number;
-  switch (edge) {
-    case 0: // top
-      x = Math.random() * WORLD_WIDTH;
-      y = -SPAWN_MARGIN;
-      break;
-    case 1: // bottom
-      x = Math.random() * WORLD_WIDTH;
-      y = WORLD_HEIGHT + SPAWN_MARGIN;
-      break;
-    case 2: // left
-      x = -SPAWN_MARGIN;
-      y = Math.random() * WORLD_HEIGHT;
-      break;
-    default: // right
-      x = WORLD_WIDTH + SPAWN_MARGIN;
-      y = Math.random() * WORLD_HEIGHT;
-      break;
-  }
-
   return {
     id: state.nextId++,
-    pos: { x, y },
+    pos: pickEdgeSpawn(),
     radius: ZOMBIE_RADIUS,
     speed,
   };
@@ -337,16 +453,20 @@ function resolveContacts(state: GameState): void {
     if (
       circleRectOverlap(zombie.pos.x, zombie.pos.y, zombie.radius, playerRect)
     ) {
-      player.health -= 1;
-      // Taking a hit rattles the screen and breaks the kill chain.
-      triggerShake(state, SHAKE_HIT_MAGNITUDE, SHAKE_HIT_DURATION);
-      state.combo = 0;
-      state.comboTimer = 0;
+      damagePlayer(state);
       return false;
     }
     return true;
   });
+}
 
+/** Applies one point of damage: shake, combo break, and possibly game over. */
+function damagePlayer(state: GameState): void {
+  const player = state.player;
+  player.health -= 1;
+  triggerShake(state, SHAKE_HIT_MAGNITUDE, SHAKE_HIT_DURATION);
+  state.combo = 0;
+  state.comboTimer = 0;
   if (player.health <= 0) {
     player.health = 0;
     state.status = "gameover";

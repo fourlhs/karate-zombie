@@ -45,6 +45,23 @@ export interface Zombie {
   speed: number;
 }
 
+export type BossPhase = "walk" | "windup" | "lunge";
+
+export interface Boss {
+  pos: Vector2;
+  radius: number;
+  hp: number;
+  maxHp: number;
+  phase: BossPhase;
+  /** Seconds left in the current phase. */
+  phaseTimer: number;
+  lungeDir: Vector2;
+  /** Seconds until boss contact can damage the player again. */
+  contactCooldown: number;
+  /** Post-hit invulnerability; also drives the hurt flash. */
+  hurtTimer: number;
+}
+
 export interface HealthDrop {
   id: number;
   pos: Vector2;
@@ -71,6 +88,9 @@ export interface GameState {
   status: GameStatus;
   player: Player;
   zombies: Zombie[];
+  boss: Boss | null;
+  /** Night number that last spawned a boss, so each boss night spawns one. */
+  lastBossNight: number;
   drops: HealthDrop[];
   popups: ScorePopup[];
   score: number;

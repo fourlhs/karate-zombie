@@ -381,6 +381,64 @@ export const ZOMBIE_SIDE = [
   ]),
 ];
 
+// Boss: same species, twice the attitude. Drawn at a bigger scale.
+export const BOSS_DOWN = sprite("bd", [
+  "................",
+  "....GGGGGGGG....",
+  "...GGGGGGGGGG...",
+  "...GrrGGGGrrG...",
+  "...GGGGGGGGGG...",
+  "....GGkkkkGG....",
+  "..GGccccccccGG..",
+  ".GGGccccccccGGG.",
+  ".GG.cGccccGc.GG.",
+  "....cccccccc....",
+  "....ccGccGcc....",
+  "....cccccccc....",
+  "....cc....cc....",
+  "....cc....cc....",
+  "....GG....GG....",
+  "................",
+]);
+
+export const BOSS_UP = sprite("bu", [
+  "................",
+  "....GGGGGGGG....",
+  "...GGGGGGGGGG...",
+  "...GGGGkkGGGG...",
+  "...GGGGGGGGGG...",
+  "....GGGGGGGG....",
+  "..GGccccccccGG..",
+  ".GGGccccccccGGG.",
+  ".GG.cGccccGc.GG.",
+  "....cccccccc....",
+  "....ccGccGcc....",
+  "....cccccccc....",
+  "....cc....cc....",
+  "....cc....cc....",
+  "....GG....GG....",
+  "................",
+]);
+
+export const BOSS_SIDE = sprite("bs", [
+  "................",
+  "....GGGGGGG.....",
+  "...GGGGGGGGG....",
+  "...GGGGGGrrG....",
+  "...GGGGGGGGG....",
+  "....GGGkkGG.....",
+  "...cccccGGGGG...",
+  "...cccccGGGGG...",
+  "...cccccc.......",
+  "...cGcccc.......",
+  "...cccccc.......",
+  "....cc..cc......",
+  "....cc..cc......",
+  "....cc..cc......",
+  "....GG..GG......",
+  "................",
+]);
+
 // --- Scenery --------------------------------------------------------------
 
 export const TREE = sprite("tree", [

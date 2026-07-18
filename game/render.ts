@@ -9,6 +9,9 @@ import {
 import type { GameState, Player, Zombie } from "./types";
 import { getAttackHitbox, getNightFactor } from "./update";
 import {
+  BOSS_DOWN,
+  BOSS_SIDE,
+  BOSS_UP,
   BUSH,
   type Sprite,
   drawSprite,
@@ -34,6 +37,7 @@ import {
 } from "./sprites";
 
 const SPRITE_SCALE = 3;
+const BOSS_SCALE = 5;
 
 let hudFont = "monospace";
 
@@ -63,6 +67,9 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState): void {
   drawDrops(ctx, state);
   for (const zombie of state.zombies) {
     drawZombie(ctx, zombie, state);
+  }
+  if (state.boss) {
+    drawBoss(ctx, state);
   }
   drawPlayer(ctx, state);
   drawPopups(ctx, state);
@@ -260,6 +267,52 @@ function drawZombie(
     spr = dy > 0 ? ZOMBIE_DOWN[frame] : ZOMBIE_UP[frame];
   }
   drawSprite(ctx, spr, zombie.pos.x, zombie.pos.y, SPRITE_SCALE, flip);
+}
+
+function drawBoss(ctx: CanvasRenderingContext2D, state: GameState): void {
+  const boss = state.boss!;
+  // Post-hit flash: blink the sprite while invulnerable.
+  const flashing =
+    boss.hurtTimer > 0 && Math.floor(state.elapsed * 30) % 2 === 0;
+
+  // Face the player while stalking, or the lunge direction mid-charge.
+  const dx =
+    boss.phase === "lunge" ? boss.lungeDir.x : state.player.pos.x - boss.pos.x;
+  const dy =
+    boss.phase === "lunge" ? boss.lungeDir.y : state.player.pos.y - boss.pos.y;
+  let spr: Sprite;
+  let flip = false;
+  if (Math.abs(dx) > Math.abs(dy)) {
+    spr = BOSS_SIDE;
+    flip = dx < 0;
+  } else {
+    spr = dy > 0 ? BOSS_DOWN : BOSS_UP;
+  }
+
+  // The windup telegraph: the boss trembles and flags the incoming lunge.
+  const jitter =
+    boss.phase === "windup" ? Math.sin(state.elapsed * 60) * 2.5 : 0;
+  if (!flashing) {
+    drawSprite(ctx, spr, boss.pos.x + jitter, boss.pos.y, BOSS_SCALE, flip);
+  }
+  if (boss.phase === "windup") {
+    ctx.font = `18px ${hudFont}`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
+    ctx.fillStyle = "#e5484d";
+    ctx.fillText("!", boss.pos.x, boss.pos.y - 52 + Math.sin(state.elapsed * 12) * 3);
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+  }
+
+  // HP bar above the boss.
+  const barW = 64;
+  const barX = boss.pos.x - barW / 2;
+  const barY = boss.pos.y - 48;
+  ctx.fillStyle = "rgba(20, 20, 26, 0.7)";
+  ctx.fillRect(barX - 1, barY - 1, barW + 2, 8);
+  ctx.fillStyle = "#e5484d";
+  ctx.fillRect(barX, barY, (barW * boss.hp) / boss.maxHp, 6);
 }
 
 // --- HUD ------------------------------------------------------------------
