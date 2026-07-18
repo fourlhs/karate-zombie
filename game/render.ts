@@ -221,6 +221,24 @@ function drawPlayer(ctx: CanvasRenderingContext2D, state: GameState): void {
           : PLAYER_SIDE[walkFrame];
       break;
   }
+  // Dash afterimages trail behind the burst.
+  if (player.dashTimer > 0) {
+    for (const [dist, alpha] of [
+      [36, 0.15],
+      [18, 0.3],
+    ]) {
+      ctx.globalAlpha = alpha;
+      drawSprite(
+        ctx,
+        spr,
+        player.pos.x - player.dashDir.x * dist,
+        player.pos.y - player.dashDir.y * dist,
+        SPRITE_SCALE,
+        flip
+      );
+    }
+    ctx.globalAlpha = 1;
+  }
   drawSprite(ctx, spr, player.pos.x, player.pos.y, SPRITE_SCALE, flip);
 }
 
@@ -278,5 +296,9 @@ function drawHud(
 
   ctx.font = `10px ${hudFont}`;
   ctx.fillStyle = "rgba(20, 35, 12, 0.55)";
-  ctx.fillText("WASD MOVE · SPACE PUNCH · K KICK", 16, WORLD_HEIGHT - 26);
+  ctx.fillText(
+    "WASD MOVE · SPACE PUNCH · K KICK · SHIFT DASH",
+    16,
+    WORLD_HEIGHT - 26
+  );
 }

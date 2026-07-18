@@ -5,6 +5,9 @@ import {
   ATTACK_WIDTH,
   COMBO_MAX_MULT,
   COMBO_WINDOW,
+  DASH_COOLDOWN,
+  DASH_DURATION,
+  DASH_SPEED,
   DAY_DURATION,
   DROP_CHANCE,
   DROP_RADIUS,
@@ -36,12 +39,21 @@ import {
   ZOMBIE_SPEED_VARIANCE,
 } from "./constants";
 import type {
+  Direction,
   GameState,
   InputState,
   Player,
   Rect,
+  Vector2,
   Zombie,
 } from "./types";
+
+const FACING_VECTORS: Record<Direction, Vector2> = {
+  up: { x: 0, y: -1 },
+  down: { x: 0, y: 1 },
+  left: { x: -1, y: 0 },
+  right: { x: 1, y: 0 },
+};
 
 /** Advances the whole simulation by dt seconds. Mutates state in place. */
 export function update(state: GameState, input: InputState, dt: number): void {
@@ -93,8 +105,27 @@ function updatePlayer(player: Player, input: InputState, dt: number): void {
   if (held.includes("up")) dy -= 1;
   if (held.includes("down")) dy += 1;
 
+  player.dashTimer = Math.max(0, player.dashTimer - dt);
+  player.dashCooldown = Math.max(0, player.dashCooldown - dt);
+  const wantsDash = input.dashQueued;
+  input.dashQueued = false;
+  if (wantsDash && player.dashCooldown === 0) {
+    // Dash along the held movement keys, or straight ahead if standing still.
+    const len = Math.hypot(dx, dy);
+    player.dashDir =
+      len > 0
+        ? { x: dx / len, y: dy / len }
+        : { ...FACING_VECTORS[player.facing] };
+    player.dashTimer = DASH_DURATION;
+    player.dashCooldown = DASH_COOLDOWN;
+  }
+
   player.moving = dx !== 0 || dy !== 0;
-  if (player.moving) {
+  if (player.dashTimer > 0) {
+    player.pos.x += player.dashDir.x * DASH_SPEED * dt;
+    player.pos.y += player.dashDir.y * DASH_SPEED * dt;
+    player.moving = true;
+  } else if (player.moving) {
     const len = Math.hypot(dx, dy);
     player.pos.x += (dx / len) * player.speed * dt;
     player.pos.y += (dy / len) * player.speed * dt;
@@ -292,6 +323,8 @@ function updateZombies(state: GameState, dt: number): void {
 
 function resolveContacts(state: GameState): void {
   const player = state.player;
+  // Mid-dash the player is untouchable; zombies just get dodged through.
+  if (player.dashTimer > 0) return;
   const half = player.size / 2;
   const playerRect: Rect = {
     x: player.pos.x - half,

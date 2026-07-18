@@ -28,6 +28,11 @@ export interface Player {
   facing: Direction;
   /** True while movement keys are held; drives the walk animation. */
   moving: boolean;
+  /** Seconds of dash burst left; the player is invulnerable while > 0. */
+  dashTimer: number;
+  /** Seconds until the next dash is allowed. */
+  dashCooldown: number;
+  dashDir: Vector2;
   health: number;
   maxHealth: number;
   attack: AttackState;
@@ -89,6 +94,8 @@ export interface InputState {
   attackQueued: boolean;
   /** Set on K keydown, consumed by the update step. */
   kickQueued: boolean;
+  /** Set on Shift keydown, consumed by the update step. */
+  dashQueued: boolean;
 }
 
 /** Axis-aligned rectangle, used for the attack hitbox. */

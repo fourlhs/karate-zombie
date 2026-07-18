@@ -29,6 +29,10 @@ export function attachInput(input: InputState): () => void {
     }
     if (e.code === "KeyK" && !e.repeat) {
       input.kickQueued = true;
+      return;
+    }
+    if (e.key === "Shift" && !e.repeat) {
+      input.dashQueued = true;
     }
   };
 

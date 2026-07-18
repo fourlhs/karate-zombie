@@ -17,6 +17,9 @@ export function createInitialState(): GameState {
       speed: PLAYER_SPEED,
       facing: "down",
       moving: false,
+      dashTimer: 0,
+      dashCooldown: 0,
+      dashDir: { x: 0, y: 1 },
       health: PLAYER_MAX_HEALTH,
       maxHealth: PLAYER_MAX_HEALTH,
       attack: {
@@ -44,5 +47,6 @@ export function createInputState(): InputState {
     heldDirections: [],
     attackQueued: false,
     kickQueued: false,
+    dashQueued: false,
   };
 }

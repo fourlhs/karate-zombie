@@ -38,6 +38,11 @@ export const SPAWN_INTERVAL_MIN = 0.45;
 /** Seconds over which the spawn interval ramps from start to min. */
 export const SPAWN_RAMP_DURATION = 90;
 
+/** Dash: a quick burst on Shift with brief invulnerability. */
+export const DASH_SPEED = 800;
+export const DASH_DURATION = 0.18;
+export const DASH_COOLDOWN = 1.0;
+
 /** Kills within this window chain into a combo; the bonus caps at x5. */
 export const COMBO_WINDOW = 2;
 export const COMBO_MAX_MULT = 5;
