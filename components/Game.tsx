@@ -11,6 +11,15 @@ import {
 } from "@/game/constants";
 import TouchControls from "@/components/TouchControls";
 import { attachInput } from "@/game/input";
+import {
+  LEADERBOARD_SIZE,
+  NAME_MAX_LENGTH,
+  fetchTopScores,
+  qualifiesForLeaderboard,
+  sanitizeName,
+  submitScore,
+  type LeaderboardEntry,
+} from "@/game/leaderboard";
 import { setMusicIntensity, startMusic, stopMusic } from "@/game/music";
 import { render, setHudFont, setTouchMode } from "@/game/render";
 import { createInitialState, createInputState } from "@/game/state";
@@ -53,6 +62,53 @@ export default function Game() {
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [isTouch, setIsTouch] = useState(false);
   const upgradeShownRef = useRef(false);
+
+  // Global leaderboard (Supabase). "offline" keeps the game fully playable:
+  // the overlay just falls back to the local best.
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [lbStatus, setLbStatus] = useState<"loading" | "ready" | "offline">(
+    "loading",
+  );
+  const [entryStage, setEntryStage] = useState<
+    "none" | "prompt" | "submitting" | "done" | "failed"
+  >("none");
+  const [playerName, setPlayerName] = useState("");
+
+  // Fetch the top list when the game-over overlay appears; only prompt for a
+  // name when this run actually cracks it.
+  useEffect(() => {
+    if (!overlay.visible) return;
+    let cancelled = false;
+    setLbStatus("loading");
+    setEntryStage("none");
+    fetchTopScores().then((top) => {
+      if (cancelled) return;
+      if (top === null) {
+        setLbStatus("offline");
+        return;
+      }
+      setLeaderboard(top);
+      setLbStatus("ready");
+      if (qualifiesForLeaderboard(overlay.score, top)) setEntryStage("prompt");
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [overlay.visible, overlay.score]);
+
+  const submitName = useCallback(async () => {
+    const name = sanitizeName(playerName);
+    if (!name) return;
+    setEntryStage("submitting");
+    const ok = await submitScore(name, overlay.score);
+    if (!ok) {
+      setEntryStage("failed");
+      return;
+    }
+    setEntryStage("done");
+    const top = await fetchTopScores();
+    if (top) setLeaderboard(top);
+  }, [playerName, overlay.score]);
 
   useEffect(() => {
     pausedRef.current = settingsOpen || upgradeOpen;
@@ -169,7 +225,14 @@ export default function Game() {
     stateRef.current = createInitialState();
     gameOverReportedRef.current = false;
     upgradeShownRef.current = false;
+    // Typing a name uses game keys (space = punch); drop anything queued.
+    const input = inputRef.current;
+    input.attackQueued = false;
+    input.kickQueued = false;
+    input.dashQueued = false;
     setUpgradeOpen(false);
+    setEntryStage("none");
+    setPlayerName("");
     setOverlay({ visible: false, score: 0, best: 0, isNewBest: false });
   }, []);
 
@@ -247,6 +310,68 @@ export default function Game() {
           ) : (
             <p className="best">Best: {overlay.best}</p>
           )}
+          <div className="leaderboard">
+            <h2>GLOBAL TOP {LEADERBOARD_SIZE}</h2>
+            {lbStatus === "loading" && <p className="lb-note">loading…</p>}
+            {lbStatus === "offline" && (
+              <p className="lb-note">offline — showing local best only</p>
+            )}
+            {lbStatus === "ready" &&
+              (leaderboard.length === 0 ? (
+                <p className="lb-note">no scores yet — be the first</p>
+              ) : (
+                <ol>
+                  {leaderboard.map((entry, i) => (
+                    <li key={`${i}-${entry.name}-${entry.score}`}>
+                      <span className="lb-name">
+                        {i + 1}. {entry.name}
+                      </span>
+                      <span className="lb-score">{entry.score}</span>
+                    </li>
+                  ))}
+                </ol>
+              ))}
+            {entryStage === "prompt" && (
+              <div className="name-entry">
+                <p className="lb-note qualify">
+                  You made the global top {LEADERBOARD_SIZE}! Enter your name:
+                </p>
+                <div className="name-entry-row">
+                  <input
+                    type="text"
+                    maxLength={NAME_MAX_LENGTH}
+                    placeholder="YOUR NAME"
+                    value={playerName}
+                    autoFocus
+                    onChange={(e) => setPlayerName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") submitName();
+                      // Keep typing away from the game's window-level keys.
+                      e.stopPropagation();
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={submitName}
+                    disabled={!sanitizeName(playerName)}
+                  >
+                    SUBMIT
+                  </button>
+                </div>
+              </div>
+            )}
+            {entryStage === "submitting" && (
+              <p className="lb-note">submitting…</p>
+            )}
+            {entryStage === "done" && (
+              <p className="lb-note done">score submitted!</p>
+            )}
+            {entryStage === "failed" && (
+              <p className="lb-note">
+                couldn't reach the leaderboard — score not saved
+              </p>
+            )}
+          </div>
           <button type="button" onClick={restart} autoFocus>
             Restart
           </button>
