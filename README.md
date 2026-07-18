@@ -21,6 +21,9 @@ For a production build: `npm run build && npm start`.
   frames with a brief cooldown
 - **K** — kick: reaches further and sweeps wider, but takes much longer to
   recharge
+- **Shift** — dash: a quick burst in the direction you're moving (or facing),
+  with a 1-second cooldown. You're invulnerable during the burst — it's a
+  dodge.
 - Zombies spawn at random screen edges and walk toward you. Hitting one with
   your attack kills it and scores points. If one reaches you, it deals 1 damage
   and is destroyed. At 0 health you get a Game Over screen with your final
@@ -36,6 +39,11 @@ For a production build: `npm run build && npm start`.
   is worth 10 × the combo count (capped at ×5), shown as a floating "+N"
   popup and a COMBO counter under the score. Taking a hit breaks the chain —
   and shakes the screen.
+- Every 2nd night a boss zombie lumbers in: bigger, 5 hits to kill (HP bar
+  shown), worth 100 points and a guaranteed heart. It telegraphs its lunge —
+  when it trembles with a "!" overhead, dash out of the way.
+- Your best score is saved in the browser (localStorage) and shown as BEST in
+  the HUD and on the Game Over screen.
 
 ## Architecture
 
