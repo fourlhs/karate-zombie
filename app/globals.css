@@ -168,10 +168,11 @@ body {
 }
 
 .name-entry input {
-  width: 180px;
+  width: 200px;
   padding: 10px;
   font-family: inherit;
-  font-size: 12px;
+  /* 16px minimum: anything smaller makes iOS Safari zoom in on focus. */
+  font-size: 16px;
   color: #f4f1e8;
   background: #0a0c10;
   border: 2px solid rgba(244, 241, 232, 0.5);
@@ -226,6 +227,23 @@ body {
 
 .settings-button:hover {
   background: rgba(10, 12, 16, 0.85);
+}
+
+.fullscreen-button {
+  right: 58px;
+}
+
+/* Fatter tap targets on touch screens. */
+@media (pointer: coarse) {
+  .settings-button {
+    width: 48px;
+    height: 48px;
+    font-size: 22px;
+  }
+
+  .fullscreen-button {
+    right: 66px;
+  }
 }
 
 .settings {
@@ -365,17 +383,34 @@ body {
   pointer-events: none;
 }
 
+/* The whole left side is the joystick's touch zone; the stick appears
+   wherever the thumb lands. */
+.joystick-zone {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 48%;
+  pointer-events: auto;
+  touch-action: none;
+}
+
 .joystick {
   position: absolute;
-  left: 20px;
-  bottom: 20px;
+  left: calc(20px + env(safe-area-inset-left, 0px));
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
   width: 128px;
   height: 128px;
   border-radius: 50%;
   background: rgba(10, 12, 16, 0.35);
   border: 2px solid rgba(244, 241, 232, 0.35);
-  pointer-events: auto;
+  opacity: 0.45; /* dim ghost marks the resting spot */
+  pointer-events: none;
   touch-action: none;
+}
+
+.joystick.joystick-active {
+  opacity: 1;
 }
 
 .joystick-nub {
@@ -403,6 +438,7 @@ body {
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .touch-button:active {
@@ -410,32 +446,32 @@ body {
 }
 
 .tb-punch {
-  right: 22px;
-  bottom: 26px;
+  right: calc(22px + env(safe-area-inset-right, 0px));
+  bottom: calc(26px + env(safe-area-inset-bottom, 0px));
   width: 72px;
   height: 72px;
   font-size: 30px;
 }
 
 .tb-kick {
-  right: 104px;
-  bottom: 52px;
+  right: calc(104px + env(safe-area-inset-right, 0px));
+  bottom: calc(52px + env(safe-area-inset-bottom, 0px));
   width: 60px;
   height: 60px;
   font-size: 24px;
 }
 
 .tb-dash {
-  right: 34px;
-  bottom: 110px;
+  right: calc(34px + env(safe-area-inset-right, 0px));
+  bottom: calc(110px + env(safe-area-inset-bottom, 0px));
   width: 60px;
   height: 60px;
   font-size: 24px;
 }
 
 .tb-special {
-  right: 112px;
-  bottom: 126px;
+  right: calc(112px + env(safe-area-inset-right, 0px));
+  bottom: calc(126px + env(safe-area-inset-bottom, 0px));
   width: 52px;
   height: 52px;
   font-size: 22px;

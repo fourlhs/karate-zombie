@@ -7,6 +7,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  // Extend under notches so safe-area insets position the touch controls.
+  viewportFit: "cover",
 };
 
 const arcadeFont = Press_Start_2P({ weight: "400", subsets: ["latin"] });

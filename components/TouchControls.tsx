@@ -7,14 +7,18 @@ import type { Direction, InputState } from "@/game/types";
 const STICK_RADIUS = 44;
 /** Below this fraction of the radius the stick reads as neutral. */
 const DEAD_ZONE = 0.25;
+/** Half the joystick base, for keeping it on screen. */
+const BASE_HALF = 64;
 
 type QueuedFlag = "attackQueued" | "kickQueued" | "dashQueued" | "specialQueued";
 
 /**
- * Virtual joystick + action buttons for touch devices. Feeds the exact same
- * InputState the keyboard uses, so the game core doesn't know the difference.
- * Each control captures its own pointer, so moving and attacking at the same
- * time (multitouch) just works.
+ * Touch input for the game. The left half of the screen is a joystick zone:
+ * touch anywhere and the stick appears under your thumb (a dim ghost marks
+ * the resting spot). The right side holds the action buttons. Everything
+ * feeds the exact same InputState the keyboard uses, and each control
+ * captures its own pointer so moving and attacking at once (multitouch)
+ * just works.
  */
 export default function TouchControls({
   inputRef,
@@ -24,6 +28,7 @@ export default function TouchControls({
   const baseRef = useRef<HTMLDivElement>(null);
   const nubRef = useRef<HTMLDivElement>(null);
   const stickPointerRef = useRef<number | null>(null);
+  const centerRef = useRef({ x: 0, y: 0 });
 
   const setDirections = (nx: number, ny: number): void => {
     // Map the analog vector onto held directions; the dominant axis goes
@@ -42,12 +47,10 @@ export default function TouchControls({
   };
 
   const moveStick = (e: PointerEvent<HTMLDivElement>): void => {
-    const base = baseRef.current;
     const nub = nubRef.current;
-    if (!base || !nub) return;
-    const rect = base.getBoundingClientRect();
-    const dx = e.clientX - (rect.left + rect.width / 2);
-    const dy = e.clientY - (rect.top + rect.height / 2);
+    if (!nub) return;
+    const dx = e.clientX - centerRef.current.x;
+    const dy = e.clientY - centerRef.current.y;
     const len = Math.hypot(dx, dy);
     const clamped = Math.min(len, STICK_RADIUS);
     const nx = len > 0 ? dx / len : 0;
@@ -63,7 +66,40 @@ export default function TouchControls({
   const releaseStick = (): void => {
     stickPointerRef.current = null;
     inputRef.current.heldDirections = [];
-    if (nubRef.current) nubRef.current.style.transform = "translate(0, 0)";
+    const base = baseRef.current;
+    const nub = nubRef.current;
+    if (nub) nub.style.transform = "translate(0, 0)";
+    if (base) {
+      base.classList.remove("joystick-active");
+      // Clear inline positioning so the CSS ghost position takes over again.
+      base.style.left = "";
+      base.style.top = "";
+      base.style.bottom = "";
+    }
+  };
+
+  const grabStick = (e: PointerEvent<HTMLDivElement>): void => {
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    stickPointerRef.current = e.pointerId;
+    const base = baseRef.current;
+    if (base) {
+      // Center the stick under the finger, kept fully on screen.
+      const x = Math.min(
+        Math.max(e.clientX, BASE_HALF + 4),
+        window.innerWidth * 0.48
+      );
+      const y = Math.min(
+        Math.max(e.clientY, BASE_HALF + 4),
+        window.innerHeight - BASE_HALF - 4
+      );
+      base.style.left = `${x - BASE_HALF}px`;
+      base.style.top = `${y - BASE_HALF}px`;
+      base.style.bottom = "auto";
+      base.classList.add("joystick-active");
+      centerRef.current = { x, y };
+    }
+    moveStick(e);
   };
 
   const queue = (flag: QueuedFlag) => (e: PointerEvent<HTMLButtonElement>) => {
@@ -74,14 +110,8 @@ export default function TouchControls({
   return (
     <div className="touch-controls">
       <div
-        ref={baseRef}
-        className="joystick"
-        onPointerDown={(e) => {
-          e.preventDefault();
-          e.currentTarget.setPointerCapture(e.pointerId);
-          stickPointerRef.current = e.pointerId;
-          moveStick(e);
-        }}
+        className="joystick-zone"
+        onPointerDown={grabStick}
         onPointerMove={(e) => {
           if (e.pointerId === stickPointerRef.current) moveStick(e);
         }}
@@ -92,7 +122,9 @@ export default function TouchControls({
           if (e.pointerId === stickPointerRef.current) releaseStick();
         }}
       >
-        <div ref={nubRef} className="joystick-nub" />
+        <div ref={baseRef} className="joystick">
+          <div ref={nubRef} className="joystick-nub" />
+        </div>
       </div>
       <button
         type="button"

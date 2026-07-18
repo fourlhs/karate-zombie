@@ -371,9 +371,19 @@ function drawHud(
   state: GameState,
   night: number
 ): void {
-  drawSprite(ctx, night > 0.5 ? MOON : SUN, WORLD_WIDTH / 2, 28, SPRITE_SCALE);
+  // Touch screens shrink the whole world, so the HUD compensates by growing.
+  const hs = touchMode ? 1.6 : 1;
+  const px = (v: number) => Math.round(v * hs);
 
-  ctx.font = `16px ${hudFont}`;
+  drawSprite(
+    ctx,
+    night > 0.5 ? MOON : SUN,
+    WORLD_WIDTH / 2,
+    px(28),
+    px(SPRITE_SCALE)
+  );
+
+  ctx.font = `${px(16)}px ${hudFont}`;
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
   ctx.fillStyle = "rgba(20, 35, 12, 0.6)";
@@ -382,27 +392,33 @@ function drawHud(
   ctx.fillText(`SCORE ${state.score}`, 16, 16);
 
   if (state.combo >= 2) {
-    ctx.font = `12px ${hudFont}`;
+    ctx.font = `${px(12)}px ${hudFont}`;
     ctx.fillStyle = "rgba(20, 35, 12, 0.6)";
-    ctx.fillText(`COMBO x${state.combo}`, 18, 46);
+    ctx.fillText(`COMBO x${state.combo}`, 18, 18 + px(28));
     ctx.fillStyle = "#ffd23f";
-    ctx.fillText(`COMBO x${state.combo}`, 16, 44);
+    ctx.fillText(`COMBO x${state.combo}`, 16, 16 + px(28));
   }
 
   const { health, maxHealth } = state.player;
-  const spacing = 30;
+  const spacing = px(30);
   for (let i = 0; i < maxHealth; i++) {
     const hx = WORLD_WIDTH - 16 - (maxHealth - i) * spacing + spacing / 2;
-    drawSprite(ctx, i < health ? HEART_FULL : HEART_EMPTY, hx, 26, SPRITE_SCALE);
+    drawSprite(
+      ctx,
+      i < health ? HEART_FULL : HEART_EMPTY,
+      hx,
+      px(26),
+      px(SPRITE_SCALE)
+    );
   }
 
-  ctx.font = `10px ${hudFont}`;
+  ctx.font = `${px(10)}px ${hudFont}`;
   ctx.textAlign = "right";
   ctx.fillStyle = "rgba(255, 251, 232, 0.75)";
   ctx.fillText(
     `BEST ${Math.max(state.highScore, state.score)}`,
     WORLD_WIDTH - 16,
-    48
+    px(48)
   );
   ctx.textAlign = "left";
 
@@ -418,14 +434,15 @@ function drawHud(
 
   // Special meter, bottom center.
   const ratio = state.special / SPECIAL_MAX;
-  const barW = 180;
+  const barW = px(180);
+  const barH = px(10);
   const barX = WORLD_WIDTH / 2 - barW / 2;
-  const barY = WORLD_HEIGHT - 30;
+  const barY = WORLD_HEIGHT - px(30);
   ctx.fillStyle = "rgba(20, 20, 26, 0.6)";
-  ctx.fillRect(barX - 2, barY - 2, barW + 4, 14);
+  ctx.fillRect(barX - 2, barY - 2, barW + 4, barH + 4);
   ctx.fillStyle = ratio >= 1 ? "#ffd23f" : "rgba(255, 210, 63, 0.55)";
-  ctx.fillRect(barX, barY, barW * ratio, 10);
-  ctx.font = `9px ${hudFont}`;
+  ctx.fillRect(barX, barY, barW * ratio, barH);
+  ctx.font = `${px(9)}px ${hudFont}`;
   ctx.textAlign = "center";
   if (ratio >= 1) {
     if (Math.floor(state.elapsed * 3) % 2 === 0) {
@@ -433,12 +450,12 @@ function drawHud(
       ctx.fillText(
         touchMode ? "SPECIAL READY!" : "PRESS J!",
         WORLD_WIDTH / 2,
-        barY - 14
+        barY - px(14)
       );
     }
   } else {
     ctx.fillStyle = "rgba(20, 35, 12, 0.55)";
-    ctx.fillText("SPECIAL", WORLD_WIDTH / 2, barY - 14);
+    ctx.fillText("SPECIAL", WORLD_WIDTH / 2, barY - px(14));
   }
   ctx.textAlign = "left";
 }

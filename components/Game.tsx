@@ -42,6 +42,7 @@ const CONTROLS: Array<[string, string]> = [
 ];
 
 export default function Game() {
+  const frameRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stateRef = useRef<GameState>(createInitialState());
   const inputRef = useRef<InputState>(createInputState());
@@ -61,6 +62,7 @@ export default function Game() {
   const [soundOn, setSoundOn] = useState(true);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [isTouch, setIsTouch] = useState(false);
+  const [fsSupported, setFsSupported] = useState(false);
   const upgradeShownRef = useRef(false);
 
   // Global leaderboard (Supabase). "offline" keeps the game fully playable:
@@ -128,17 +130,30 @@ export default function Game() {
       window.matchMedia("(pointer: coarse)").matches;
     setIsTouch(touch);
     setTouchMode(touch);
+    setFsSupported(document.fullscreenEnabled ?? false);
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    const frame = frameRef.current;
+    if (!frame) return;
+    if (document.fullscreenElement) {
+      void document.exitFullscreen().catch(() => {});
+    } else {
+      void frame.requestFullscreen().catch(() => {});
+    }
   }, []);
 
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
+    // Opaque canvas: we always paint the full frame, and it composites faster.
+    const ctx = canvas.getContext("2d", { alpha: false });
     if (!ctx) return;
 
     // Render at device resolution while keeping logical coordinates fixed.
-    const dpr = window.devicePixelRatio || 1;
+    // Capped at 2x: 3x phone panels are invisible extra work for pixel art.
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     canvas.width = WORLD_WIDTH * dpr;
     canvas.height = WORLD_HEIGHT * dpr;
     ctx.scale(dpr, dpr);
@@ -284,7 +299,7 @@ export default function Game() {
   }, []);
 
   return (
-    <div className="game-frame">
+    <div className="game-frame" ref={frameRef}>
       <canvas
         ref={canvasRef}
         className="game-canvas"
@@ -298,6 +313,16 @@ export default function Game() {
       >
         ⚙
       </button>
+      {fsSupported && (
+        <button
+          type="button"
+          className="settings-button fullscreen-button"
+          aria-label="Fullscreen"
+          onClick={toggleFullscreen}
+        >
+          ⛶
+        </button>
+      )}
       {isTouch && <TouchControls inputRef={inputRef} />}
       {overlay.visible && (
         <div className="game-over">
