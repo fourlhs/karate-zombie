@@ -17,13 +17,18 @@ For a production build: `npm run build && npm start`.
 ## How to play
 
 - **WASD** — move (the karateka faces the direction you last moved)
-- **Space** — melee attack: a short-range strike in front of you, active for a
-  few frames with a brief cooldown
+- **Space** — punch: a short-range strike in front of you, active for a few
+  frames with a brief cooldown
+- **K** — kick: reaches further and sweeps wider, but takes much longer to
+  recharge
 - Zombies spawn at random screen edges and walk toward you. Hitting one with
   your attack kills it and scores points. If one reaches you, it deals 1 damage
   and is destroyed. At 0 health you get a Game Over screen with your final
   score and a restart button.
 - The longer you survive, the faster zombies spawn and move (capped).
+- Day and night alternate every ~15 seconds (sun/moon icon in the HUD). At
+  night the field darkens and zombies spawn twice as fast and move ~40%
+  faster; at dawn it eases off again.
 
 ## Architecture
 
