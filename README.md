@@ -57,6 +57,15 @@ For a production build: `npm run build && npm start`.
   a chiptune music loop (a 16-step sequencer) that speeds up with your combo.
   Like the art, there are no asset files.
 
+## Mobile
+
+On touch devices the game shows a virtual joystick (drag to move in any
+direction) and four action buttons — punch, kick, dash, and special — with
+full multitouch, so you can steer and attack at the same time. The touch
+layer feeds the exact same input state the keyboard uses; the game core
+can't tell the difference. The canvas scales to fit any screen size and
+orientation, and desktop keeps plain WASD + Space with no touch UI.
+
 ## Dev test mode
 
 Open the game with `?test=1` to expose `window.__kz` — live getters for the
