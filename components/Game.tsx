@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MAX_DELTA, WORLD_HEIGHT, WORLD_WIDTH } from "@/game/constants";
 import { attachInput } from "@/game/input";
-import { render } from "@/game/render";
+import { render, setHudFont } from "@/game/render";
 import { createInitialState, createInputState } from "@/game/state";
 import type { GameState, InputState } from "@/game/types";
 import { update } from "@/game/update";
@@ -31,6 +31,8 @@ export default function Game() {
     canvas.width = WORLD_WIDTH * dpr;
     canvas.height = WORLD_HEIGHT * dpr;
     ctx.scale(dpr, dpr);
+    ctx.imageSmoothingEnabled = false;
+    setHudFont(getComputedStyle(document.body).fontFamily);
 
     const detachInput = attachInput(inputRef.current);
 

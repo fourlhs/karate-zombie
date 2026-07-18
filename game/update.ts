@@ -48,7 +48,8 @@ function updatePlayer(player: Player, input: InputState, dt: number): void {
   if (held.includes("up")) dy -= 1;
   if (held.includes("down")) dy += 1;
 
-  if (dx !== 0 || dy !== 0) {
+  player.moving = dx !== 0 || dy !== 0;
+  if (player.moving) {
     const len = Math.hypot(dx, dy);
     player.pos.x += (dx / len) * player.speed * dt;
     player.pos.y += (dy / len) * player.speed * dt;

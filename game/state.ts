@@ -16,6 +16,7 @@ export function createInitialState(): GameState {
       size: PLAYER_SIZE,
       speed: PLAYER_SPEED,
       facing: "down",
+      moving: false,
       health: PLAYER_MAX_HEALTH,
       maxHealth: PLAYER_MAX_HEALTH,
       attack: { activeTimer: 0, cooldownTimer: 0 },

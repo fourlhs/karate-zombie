@@ -20,6 +20,8 @@ export interface Player {
   size: number;
   speed: number;
   facing: Direction;
+  /** True while movement keys are held; drives the walk animation. */
+  moving: boolean;
   health: number;
   maxHealth: number;
   attack: AttackState;
