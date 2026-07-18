@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { playSounds, setMuted, unlockAudio } from "@/game/audio";
 import {
   HIGH_SCORE_KEY,
@@ -10,18 +10,27 @@ import {
   WORLD_WIDTH,
 } from "@/game/constants";
 import TouchControls from "@/components/TouchControls";
+import { setHapticsEnabled, vibrateFor } from "@/game/haptics";
 import { attachInput } from "@/game/input";
 import {
   LEADERBOARD_SIZE,
   NAME_MAX_LENGTH,
   fetchTopScores,
+  loadSavedName,
   qualifiesForLeaderboard,
   sanitizeName,
+  saveName,
   submitScore,
   type LeaderboardEntry,
 } from "@/game/leaderboard";
 import { setMusicIntensity, startMusic, stopMusic } from "@/game/music";
-import { render, setHudFont, setTouchMode } from "@/game/render";
+import {
+  render,
+  setChallenge,
+  setHudFont,
+  setTouchMode,
+  type Challenge,
+} from "@/game/render";
 import { createInitialState, createInputState } from "@/game/state";
 import type { GameState, InputState, UpgradeKind } from "@/game/types";
 import { applyUpgrade, update } from "@/game/update";
@@ -75,6 +84,26 @@ export default function Game() {
     "none" | "prompt" | "submitting" | "done" | "failed"
   >("none");
   const [playerName, setPlayerName] = useState("");
+  const [shareState, setShareState] = useState<"hidden" | "idle" | "copied">(
+    "hidden",
+  );
+  // A friend's score carried in from a shared ?beat= link.
+  const challengeRef = useRef<Challenge | null>(null);
+  const overlayShownAtRef = useRef(0);
+
+  // Read the challenge from the URL and remember the player's name.
+  useEffect(() => {
+    setPlayerName(loadSavedName());
+    const params = new URLSearchParams(window.location.search);
+    const beat = parseInt(params.get("beat") ?? "", 10);
+    if (Number.isFinite(beat) && beat > 0) {
+      const by =
+        sanitizeName(params.get("by") ?? "").toUpperCase() || "A FRIEND";
+      challengeRef.current = { by, score: beat, beaten: false };
+      setChallenge({ ...challengeRef.current });
+    }
+    return () => setChallenge(null);
+  }, []);
 
   // Fetch the top list when the game-over overlay appears; only prompt for a
   // name when this run actually cracks it.
@@ -83,6 +112,12 @@ export default function Game() {
     let cancelled = false;
     setLbStatus("loading");
     setEntryStage("none");
+    setShareState(
+      typeof navigator !== "undefined" &&
+        (navigator.share !== undefined || navigator.clipboard !== undefined)
+        ? "idle"
+        : "hidden",
+    );
     fetchTopScores().then((top) => {
       if (cancelled) return;
       if (top === null) {
@@ -107,10 +142,31 @@ export default function Game() {
       setEntryStage("failed");
       return;
     }
+    saveName(name);
     setEntryStage("done");
     const top = await fetchTopScores();
     if (top) setLeaderboard(top);
   }, [playerName, overlay.score]);
+
+  const shareScore = useCallback(async () => {
+    const url = new URL(window.location.href);
+    url.search = "";
+    url.searchParams.set("beat", String(overlay.score));
+    const name = sanitizeName(playerName) || loadSavedName();
+    if (name) url.searchParams.set("by", name);
+    const text = `I scored ${overlay.score} in Karate Zombies 🥋🧟 Beat me:`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ text, url: url.toString() });
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(`${text} ${url.toString()}`);
+        setShareState("copied");
+        setTimeout(() => setShareState("idle"), 2000);
+      }
+    } catch {
+      // User closed the share sheet — not an error.
+    }
+  }, [overlay.score, playerName]);
 
   useEffect(() => {
     pausedRef.current = settingsOpen || upgradeOpen;
@@ -130,6 +186,7 @@ export default function Game() {
       window.matchMedia("(pointer: coarse)").matches;
     setIsTouch(touch);
     setTouchMode(touch);
+    setHapticsEnabled(touch);
     setFsSupported(document.fullscreenEnabled ?? false);
   }, []);
 
@@ -188,7 +245,20 @@ export default function Game() {
         update(state, inputRef.current, dt);
         if (state.sounds.length > 0) {
           playSounds(state.sounds);
+          vibrateFor(state.sounds);
           state.sounds.length = 0;
+        }
+        const ch = challengeRef.current;
+        if (ch && !ch.beaten && state.score > ch.score) {
+          ch.beaten = true;
+          setChallenge({ ...ch });
+          playSounds(["special"]);
+          state.popups.push({
+            id: state.nextId++,
+            pos: { x: state.player.pos.x, y: state.player.pos.y - 20 },
+            text: `BEAT ${ch.by}!`,
+            ttl: 0.8,
+          });
         }
       }
       render(ctx, state);
@@ -219,6 +289,7 @@ export default function Game() {
         } catch {
           // Storage can be unavailable (private mode); the run still works.
         }
+        overlayShownAtRef.current = performance.now();
         setOverlay({ visible: true, score: state.score, best, isNewBest });
       }
 
@@ -289,6 +360,30 @@ export default function Game() {
     });
   }, []);
 
+  // Tap any dead space on the death screen to retry — armed after a short
+  // delay so mashing attack at the moment of death doesn't skip the screen.
+  const overlayTap = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (entryStage === "prompt" || entryStage === "submitting") return;
+      if ((e.target as HTMLElement).closest("button, input")) return;
+      if (performance.now() - overlayShownAtRef.current < 800) return;
+      restart();
+    },
+    [entryStage, restart],
+  );
+
+  // One-shot confetti for a new personal best.
+  const confettiPieces = useMemo(() => {
+    if (!overlay.visible || !overlay.isNewBest) return [];
+    const colors = ["#ffd23f", "#e5484d", "#7bd35a", "#f4f1e8", "#66bb55"];
+    return Array.from({ length: 28 }, (_, i) => ({
+      left: `${(i * 37) % 100}%`,
+      background: colors[i % colors.length],
+      animationDelay: `${(i % 7) * 0.16}s`,
+      animationDuration: `${1.5 + (i % 5) * 0.35}s`,
+    }));
+  }, [overlay.visible, overlay.isNewBest]);
+
   const closeSettings = useCallback(() => {
     setSettingsOpen(false);
     // Drop anything queued while paused so nothing fires on resume.
@@ -325,7 +420,14 @@ export default function Game() {
       )}
       {isTouch && <TouchControls inputRef={inputRef} />}
       {overlay.visible && (
-        <div className="game-over">
+        <div className="game-over" onClick={overlayTap}>
+          {confettiPieces.length > 0 && (
+            <div className="confetti" aria-hidden>
+              {confettiPieces.map((style, i) => (
+                <span key={i} style={style} />
+              ))}
+            </div>
+          )}
           <h1>GAME OVER</h1>
           <p>
             Final score: <strong>{overlay.score}</strong>
@@ -334,6 +436,19 @@ export default function Game() {
             <p className="new-best">NEW BEST!</p>
           ) : (
             <p className="best">Best: {overlay.best}</p>
+          )}
+          {challengeRef.current && (
+            <p
+              className={
+                challengeRef.current.beaten
+                  ? "challenge-line beaten"
+                  : "challenge-line"
+              }
+            >
+              {challengeRef.current.beaten
+                ? `You beat ${challengeRef.current.by}'s ${challengeRef.current.score}!`
+                : `${challengeRef.current.by}'s ${challengeRef.current.score} still stands…`}
+            </p>
           )}
           <div className="leaderboard">
             <h2>GLOBAL TOP {LEADERBOARD_SIZE}</h2>
@@ -397,9 +512,19 @@ export default function Game() {
               </p>
             )}
           </div>
-          <button type="button" onClick={restart} autoFocus>
-            Restart
-          </button>
+          <div className="end-buttons">
+            {shareState !== "hidden" && (
+              <button type="button" className="share-button" onClick={shareScore}>
+                {shareState === "copied" ? "LINK COPIED!" : "📤 CHALLENGE A FRIEND"}
+              </button>
+            )}
+            <button type="button" onClick={restart} autoFocus>
+              Restart
+            </button>
+          </div>
+          {entryStage !== "prompt" && entryStage !== "submitting" && (
+            <p className="retry-hint">tap anywhere to retry</p>
+          )}
         </div>
       )}
       {upgradeOpen && !settingsOpen && (

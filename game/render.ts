@@ -53,6 +53,19 @@ export function setTouchMode(value: boolean): void {
   touchMode = value;
 }
 
+export interface Challenge {
+  by: string;
+  score: number;
+  beaten: boolean;
+}
+
+let challenge: Challenge | null = null;
+
+/** A friend's score to beat, from a shared ?beat= link. */
+export function setChallenge(value: Challenge | null): void {
+  challenge = value;
+}
+
 /** Draws one full frame from the current state. */
 export function render(ctx: CanvasRenderingContext2D, state: GameState): void {
   // Screen shake: jolt the whole world layer, decaying over the shake timer.
@@ -420,7 +433,42 @@ function drawHud(
     WORLD_WIDTH - 16,
     px(48)
   );
+
+  if (challenge) {
+    if (challenge.beaten) {
+      ctx.fillStyle = "#7bd35a";
+      ctx.fillText(`BEAT ${challenge.by}!`, WORLD_WIDTH - 16, px(64));
+    } else {
+      ctx.fillStyle = "#ffb347";
+      ctx.fillText(
+        `TARGET ${challenge.by} ${challenge.score}`,
+        WORLD_WIDTH - 16,
+        px(64)
+      );
+    }
+  }
   ctx.textAlign = "left";
+
+  // Opening callout so a challenged player knows the mission immediately.
+  if (challenge && !challenge.beaten && state.elapsed < 4) {
+    if (Math.floor(state.elapsed * 2) % 2 === 0) {
+      ctx.font = `${px(14)}px ${hudFont}`;
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#22222a";
+      ctx.fillText(
+        `BEAT ${challenge.by}'S ${challenge.score}!`,
+        WORLD_WIDTH / 2 + 2,
+        px(64) + 2
+      );
+      ctx.fillStyle = "#ffd23f";
+      ctx.fillText(
+        `BEAT ${challenge.by}'S ${challenge.score}!`,
+        WORLD_WIDTH / 2,
+        px(64)
+      );
+      ctx.textAlign = "left";
+    }
+  }
 
   if (!touchMode) {
     ctx.font = `10px ${hudFont}`;

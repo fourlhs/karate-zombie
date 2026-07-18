@@ -20,6 +20,22 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 
+const NAME_KEY = "karate-zombies-name";
+
+/** The last name the player submitted with, so future entries are one tap. */
+export function loadSavedName(): string {
+  if (typeof localStorage === "undefined") return "";
+  return sanitizeName(localStorage.getItem(NAME_KEY) ?? "");
+}
+
+export function saveName(name: string): void {
+  try {
+    localStorage.setItem(NAME_KEY, sanitizeName(name));
+  } catch {
+    // Storage unavailable — the name just won't be remembered.
+  }
+}
+
 /** Keep letters, numbers, spaces and _ - . only; collapse whitespace, cap length. */
 export function sanitizeName(raw: string): string {
   return raw

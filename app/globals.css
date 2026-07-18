@@ -210,6 +210,66 @@ body {
   background: #ffd65a;
 }
 
+.game-over .end-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+.game-over .share-button {
+  background: #ffd23f;
+  font-size: 12px;
+}
+
+.game-over .share-button:hover {
+  background: #ffe27a;
+}
+
+.game-over .challenge-line {
+  font-size: 11px;
+  color: #ffb347;
+}
+
+.game-over .challenge-line.beaten {
+  color: #7bd35a;
+}
+
+.game-over .retry-hint {
+  font-size: 9px;
+  color: rgba(244, 241, 232, 0.5);
+}
+
+.confetti {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.confetti span {
+  position: absolute;
+  top: -12px;
+  width: 8px;
+  height: 8px;
+  animation: confetti-fall linear forwards;
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(640px) rotate(540deg);
+    opacity: 0;
+  }
+}
+
 .settings-button {
   position: absolute;
   right: 10px;
@@ -441,8 +501,17 @@ body {
   -webkit-touch-callout: none;
 }
 
+.touch-button {
+  transition: transform 0.06s ease-out;
+}
+
 .touch-button:active {
   background: rgba(255, 210, 63, 0.55);
+  transform: scale(0.88);
+}
+
+.settings-button:active {
+  transform: scale(0.9);
 }
 
 .tb-punch {
