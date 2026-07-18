@@ -3,6 +3,7 @@ import {
   KICK_DURATION,
   POPUP_RISE,
   POPUP_TTL,
+  SPECIAL_MAX,
   WORLD_HEIGHT,
   WORLD_WIDTH,
 } from "./constants";
@@ -72,6 +73,7 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState): void {
     drawBoss(ctx, state);
   }
   drawPlayer(ctx, state);
+  drawShockwave(ctx, state);
   drawPopups(ctx, state);
   ctx.restore();
 
@@ -330,6 +332,22 @@ function drawBoss(ctx: CanvasRenderingContext2D, state: GameState): void {
   ctx.fillRect(barX, barY, (barW * boss.hp) / boss.maxHp, 6);
 }
 
+function drawShockwave(ctx: CanvasRenderingContext2D, state: GameState): void {
+  const wave = state.shockwave;
+  if (!wave) return;
+  const t = 1 - wave.timer / wave.duration;
+
+  // White screen flash that fades as the ring expands.
+  ctx.fillStyle = `rgba(255, 255, 255, ${0.35 * (1 - t)})`;
+  ctx.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+
+  ctx.strokeStyle = `rgba(255, 214, 90, ${0.9 * (1 - t)})`;
+  ctx.lineWidth = 6 + 14 * (1 - t);
+  ctx.beginPath();
+  ctx.arc(wave.pos.x, wave.pos.y, 60 + t * 500, 0, Math.PI * 2);
+  ctx.stroke();
+}
+
 // --- HUD ------------------------------------------------------------------
 
 function drawHud(
@@ -379,4 +397,26 @@ function drawHud(
     16,
     WORLD_HEIGHT - 26
   );
+
+  // Special meter, bottom center.
+  const ratio = state.special / SPECIAL_MAX;
+  const barW = 180;
+  const barX = WORLD_WIDTH / 2 - barW / 2;
+  const barY = WORLD_HEIGHT - 30;
+  ctx.fillStyle = "rgba(20, 20, 26, 0.6)";
+  ctx.fillRect(barX - 2, barY - 2, barW + 4, 14);
+  ctx.fillStyle = ratio >= 1 ? "#ffd23f" : "rgba(255, 210, 63, 0.55)";
+  ctx.fillRect(barX, barY, barW * ratio, 10);
+  ctx.font = `9px ${hudFont}`;
+  ctx.textAlign = "center";
+  if (ratio >= 1) {
+    if (Math.floor(state.elapsed * 3) % 2 === 0) {
+      ctx.fillStyle = "#ffd23f";
+      ctx.fillText("PRESS J!", WORLD_WIDTH / 2, barY - 14);
+    }
+  } else {
+    ctx.fillStyle = "rgba(20, 35, 12, 0.55)";
+    ctx.fillText("SPECIAL", WORLD_WIDTH / 2, barY - 14);
+  }
+  ctx.textAlign = "left";
 }

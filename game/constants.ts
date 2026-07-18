@@ -73,6 +73,15 @@ export const SHAKE_HIT_MAGNITUDE = 8;
 export const SHAKE_KILL_DURATION = 0.1;
 export const SHAKE_KILL_MAGNITUDE = 3;
 
+/** Special move: charged by kills, unleashed on J. */
+export const SPECIAL_MAX = 15;
+export const SPECIAL_BOSS_DAMAGE = 2;
+export const SHOCKWAVE_DURATION = 0.5;
+
+/** Slow motion: starting time scale, ramping back to full speed. */
+export const SLOWMO_SCALE = 0.2;
+export const SLOWMO_SPECIAL_DURATION = 0.6;
+
 /** Dawn upgrades: pick one at the start of each day (after night 1). */
 export const UPGRADE_DAMAGE_INC = 1;
 export const UPGRADE_COOLDOWN_FACTOR = 0.75;

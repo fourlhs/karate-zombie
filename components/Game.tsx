@@ -26,6 +26,7 @@ const CONTROLS: Array<[string, string]> = [
   ["SPACE", "Punch — quick jab"],
   ["K", "Kick — bigger sweep, slower recharge"],
   ["SHIFT", "Dash — dodge with brief invulnerability"],
+  ["J", "Special — shockwave when the meter is full"],
   ["ESC", "Settings / pause"],
 ];
 

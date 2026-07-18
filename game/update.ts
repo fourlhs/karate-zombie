@@ -37,6 +37,11 @@ import {
   SHAKE_HIT_MAGNITUDE,
   SHAKE_KILL_DURATION,
   SHAKE_KILL_MAGNITUDE,
+  SHOCKWAVE_DURATION,
+  SLOWMO_SCALE,
+  SLOWMO_SPECIAL_DURATION,
+  SPECIAL_BOSS_DAMAGE,
+  SPECIAL_MAX,
   UPGRADE_COOLDOWN_FACTOR,
   UPGRADE_COOLDOWN_MIN,
   UPGRADE_DAMAGE_INC,
@@ -80,6 +85,14 @@ export function update(state: GameState, input: InputState, dt: number): void {
     return;
   }
 
+  // Slow motion ticks on real time while the simulation dt is scaled down,
+  // ramping back to full speed as the timer runs out.
+  if (state.slowMo.timer > 0) {
+    const progress = 1 - state.slowMo.timer / state.slowMo.duration;
+    state.slowMo.timer = Math.max(0, state.slowMo.timer - dt);
+    dt *= SLOWMO_SCALE + (1 - SLOWMO_SCALE) * progress;
+  }
+
   const cycle = DAY_DURATION + NIGHT_DURATION;
   const prevDay = Math.floor(state.elapsed / cycle);
   state.elapsed += dt;
@@ -89,6 +102,7 @@ export function update(state: GameState, input: InputState, dt: number): void {
   }
   updatePlayer(state, input, dt);
   resolveAttackHits(state);
+  resolveSpecial(state, input);
   updateSpawning(state, dt);
   updateZombies(state, dt);
   updateBoss(state, dt);
@@ -190,6 +204,10 @@ function updateEffects(state: GameState, dt: number): void {
   }
   state.shake.timer = Math.max(0, state.shake.timer - dt);
   state.popups = state.popups.filter((popup) => (popup.ttl -= dt) > 0);
+  if (state.shockwave) {
+    state.shockwave.timer -= dt;
+    if (state.shockwave.timer <= 0) state.shockwave = null;
+  }
 }
 
 function triggerShake(
@@ -316,34 +334,79 @@ function resolveAttackHits(state: GameState): void {
     boss.hurtTimer === 0 &&
     circleRectOverlap(boss.pos.x, boss.pos.y, boss.radius, hitbox)
   ) {
-    boss.hp -= player.damage;
-    boss.hurtTimer = BOSS_HURT_TIME;
-    if (boss.hp <= 0) {
-      state.score += BOSS_SCORE;
-      state.popups.push({
-        id: state.nextId++,
-        pos: { ...boss.pos },
-        text: `+${BOSS_SCORE}`,
-        ttl: POPUP_TTL,
-      });
-      // A boss always leaves a heart behind.
-      state.drops.push({
-        id: state.nextId++,
-        pos: { ...boss.pos },
-        ttl: DROP_TTL,
-      });
-      triggerShake(state, SHAKE_HIT_MAGNITUDE, SHAKE_HIT_DURATION);
-      state.sounds.push("bossDie");
-      state.boss = null;
-    } else {
-      triggerShake(state, SHAKE_KILL_MAGNITUDE, SHAKE_KILL_DURATION);
-      state.sounds.push("bossHit");
-    }
+    hurtBoss(state, player.damage);
+  }
+}
+
+/** Damages the boss, paying out score, a heart, and effects if it dies. */
+function hurtBoss(state: GameState, amount: number): void {
+  const boss = state.boss;
+  if (!boss) return;
+  boss.hp -= amount;
+  boss.hurtTimer = BOSS_HURT_TIME;
+  if (boss.hp <= 0) {
+    state.score += BOSS_SCORE;
+    state.popups.push({
+      id: state.nextId++,
+      pos: { ...boss.pos },
+      text: `+${BOSS_SCORE}`,
+      ttl: POPUP_TTL,
+    });
+    // A boss always leaves a heart behind.
+    state.drops.push({
+      id: state.nextId++,
+      pos: { ...boss.pos },
+      ttl: DROP_TTL,
+    });
+    triggerShake(state, SHAKE_HIT_MAGNITUDE, SHAKE_HIT_DURATION);
+    state.sounds.push("bossDie");
+    state.boss = null;
+  } else {
+    triggerShake(state, SHAKE_KILL_MAGNITUDE, SHAKE_KILL_DURATION);
+    state.sounds.push("bossHit");
+  }
+}
+
+/** Fires the shockwave special if the meter is full and J was pressed. */
+function resolveSpecial(state: GameState, input: InputState): void {
+  const wantsSpecial = input.specialQueued;
+  input.specialQueued = false;
+  if (!wantsSpecial || state.special < SPECIAL_MAX) return;
+
+  state.special = 0;
+  state.shockwave = {
+    timer: SHOCKWAVE_DURATION,
+    duration: SHOCKWAVE_DURATION,
+    pos: { ...state.player.pos },
+  };
+  state.slowMo = {
+    timer: SLOWMO_SPECIAL_DURATION,
+    duration: SLOWMO_SPECIAL_DURATION,
+  };
+  triggerShake(state, 10, 0.4);
+  state.sounds.push("special");
+
+  // Every regular zombie on screen dies, chaining the combo. Blast kills
+  // don't recharge the meter, or a full screen would refill it instantly.
+  const blasted = state.zombies;
+  state.zombies = [];
+  for (const zombie of blasted) {
+    registerKill(state, zombie, false);
+  }
+  if (state.boss) {
+    hurtBoss(state, SPECIAL_BOSS_DAMAGE);
   }
 }
 
 /** Score, combo, popup, shake, sound, and maybe a heart for one dead zombie. */
-function registerKill(state: GameState, zombie: Zombie): void {
+function registerKill(
+  state: GameState,
+  zombie: Zombie,
+  chargeSpecial = true
+): void {
+  if (chargeSpecial) {
+    state.special = Math.min(SPECIAL_MAX, state.special + 1);
+  }
   state.combo = state.comboTimer > 0 ? state.combo + 1 : 1;
   state.comboTimer = COMBO_WINDOW;
   const gained = SCORE_PER_ZOMBIE * Math.min(state.combo, COMBO_MAX_MULT);

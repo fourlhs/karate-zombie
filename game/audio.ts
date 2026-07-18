@@ -113,6 +113,11 @@ const SOUNDS: Record<SoundEffect, () => void> = {
     tone(660, 660, 0.06, "square", 0.22);
     tone(990, 990, 0.09, "square", 0.22, 0.07);
   },
+  special: () => {
+    tone(150, 900, 0.3, "sawtooth", 0.3);
+    tone(200, 40, 0.5, "square", 0.35, 0.12);
+    noise(0.35, 0.4, 1500, 0.1);
+  },
   bossHit: () => {
     tone(200, 110, 0.1, "square", 0.35);
     noise(0.06, 0.35, 800);

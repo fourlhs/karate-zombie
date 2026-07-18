@@ -33,6 +33,10 @@ export function attachInput(input: InputState): () => void {
     }
     if (e.key === "Shift" && !e.repeat) {
       input.dashQueued = true;
+      return;
+    }
+    if (e.code === "KeyJ" && !e.repeat) {
+      input.specialQueued = true;
     }
   };
 

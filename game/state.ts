@@ -50,6 +50,9 @@ export function createInitialState(): GameState {
     combo: 0,
     comboTimer: 0,
     shake: { timer: 0, duration: 1, magnitude: 0 },
+    special: 0,
+    shockwave: null,
+    slowMo: { timer: 0, duration: 1 },
     elapsed: 0,
     spawnTimer: SPAWN_INTERVAL_START,
     nextId: 1,
@@ -62,5 +65,6 @@ export function createInputState(): InputState {
     attackQueued: false,
     kickQueued: false,
     dashQueued: false,
+    specialQueued: false,
   };
 }

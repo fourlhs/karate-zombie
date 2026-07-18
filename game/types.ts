@@ -63,6 +63,7 @@ export type SoundEffect =
   | "kill"
   | "hurt"
   | "pickup"
+  | "special"
   | "bossHit"
   | "bossDie"
   | "gameOver";
@@ -127,6 +128,12 @@ export interface GameState {
   /** Seconds left to extend the combo with another kill. */
   comboTimer: number;
   shake: Shake;
+  /** Special meter: kills charge it toward SPECIAL_MAX. */
+  special: number;
+  /** Expanding ring drawn after the special fires. */
+  shockwave: { timer: number; duration: number; pos: Vector2 } | null;
+  /** Slow motion; the simulation dt is scaled while timer > 0. */
+  slowMo: { timer: number; duration: number };
   /** Seconds since the run started; drives the difficulty ramp. */
   elapsed: number;
   /** Seconds until the next zombie spawns. */
@@ -144,6 +151,8 @@ export interface InputState {
   kickQueued: boolean;
   /** Set on Shift keydown, consumed by the update step. */
   dashQueued: boolean;
+  /** Set on J keydown, consumed by the update step. */
+  specialQueued: boolean;
 }
 
 /** Axis-aligned rectangle, used for the attack hitbox. */
