@@ -10,6 +10,7 @@ import {
   WORLD_WIDTH,
 } from "@/game/constants";
 import { attachInput } from "@/game/input";
+import { setMusicIntensity, startMusic, stopMusic } from "@/game/music";
 import { render, setHudFont } from "@/game/render";
 import { createInitialState, createInputState } from "@/game/state";
 import type { GameState, InputState, UpgradeKind } from "@/game/types";
@@ -37,6 +38,8 @@ export default function Game() {
   // Mirrors the transition into "gameover" so we only setState once, not per frame.
   const gameOverReportedRef = useRef(false);
   const pausedRef = useRef(false);
+  // Music may only start after a user gesture unlocks audio.
+  const audioReadyRef = useRef(false);
 
   const [overlay, setOverlay] = useState<{
     visible: boolean;
@@ -83,6 +86,7 @@ export default function Game() {
     // Browsers only allow audio after a user gesture — unlock on the first one.
     const unlock = () => {
       unlockAudio();
+      audioReadyRef.current = true;
       window.removeEventListener("keydown", unlock);
       window.removeEventListener("pointerdown", unlock);
     };
@@ -106,6 +110,18 @@ export default function Game() {
         }
       }
       render(ctx, state);
+
+      // Music runs while actually playing; kill streaks push the tempo.
+      if (
+        audioReadyRef.current &&
+        !pausedRef.current &&
+        state.status === "playing"
+      ) {
+        startMusic();
+        setMusicIntensity(state.combo);
+      } else {
+        stopMusic();
+      }
 
       if (state.pendingUpgrade && !upgradeShownRef.current) {
         upgradeShownRef.current = true;
@@ -131,6 +147,7 @@ export default function Game() {
     return () => {
       cancelAnimationFrame(rafId);
       detachInput();
+      stopMusic();
       window.removeEventListener("keydown", onEscape);
       window.removeEventListener("keydown", unlock);
       window.removeEventListener("pointerdown", unlock);

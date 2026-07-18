@@ -11,6 +11,14 @@ let muted = false;
 
 export function setMuted(value: boolean): void {
   muted = value;
+  // Zero the master gain so the music loop is silenced too.
+  if (master) master.gain.value = value ? 0 : 0.35;
+}
+
+/** Shared context + master gain for the music sequencer. */
+export function getAudioBus(): { ctx: AudioContext; master: GainNode } | null {
+  const context = ensureContext();
+  return context && master ? { ctx: context, master } : null;
 }
 
 /** Browsers only allow audio after a user gesture; call this from one. */
