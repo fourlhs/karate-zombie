@@ -38,6 +38,18 @@ export const SPAWN_INTERVAL_MIN = 0.45;
 /** Seconds over which the spawn interval ramps from start to min. */
 export const SPAWN_RAMP_DURATION = 90;
 
+/** Kills within this window chain into a combo; the bonus caps at x5. */
+export const COMBO_WINDOW = 2;
+export const COMBO_MAX_MULT = 5;
+/** Score popups: lifetime in seconds and how far they float up. */
+export const POPUP_TTL = 0.8;
+export const POPUP_RISE = 40;
+/** Screen shake (duration seconds, magnitude logical px). */
+export const SHAKE_HIT_DURATION = 0.3;
+export const SHAKE_HIT_MAGNITUDE = 8;
+export const SHAKE_KILL_DURATION = 0.1;
+export const SHAKE_KILL_MAGNITUDE = 3;
+
 /** Chance a killed zombie leaves a health drop behind. */
 export const DROP_CHANCE = 0.2;
 /** Seconds a drop stays on the ground, and its pickup radius. */

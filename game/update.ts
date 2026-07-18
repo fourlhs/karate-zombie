@@ -3,6 +3,8 @@ import {
   ATTACK_DURATION,
   ATTACK_REACH,
   ATTACK_WIDTH,
+  COMBO_MAX_MULT,
+  COMBO_WINDOW,
   DAY_DURATION,
   DROP_CHANCE,
   DROP_RADIUS,
@@ -15,7 +17,12 @@ import {
   NIGHT_FADE,
   NIGHT_SPAWN_FACTOR,
   NIGHT_SPEED_FACTOR,
+  POPUP_TTL,
   SCORE_PER_ZOMBIE,
+  SHAKE_HIT_DURATION,
+  SHAKE_HIT_MAGNITUDE,
+  SHAKE_KILL_DURATION,
+  SHAKE_KILL_MAGNITUDE,
   SPAWN_INTERVAL_MIN,
   SPAWN_INTERVAL_START,
   SPAWN_MARGIN,
@@ -50,6 +57,31 @@ export function update(state: GameState, input: InputState, dt: number): void {
   updateZombies(state, dt);
   updateDrops(state, dt);
   resolveContacts(state);
+  updateEffects(state, dt);
+}
+
+/** Ticks down combo, popup, and shake timers. */
+function updateEffects(state: GameState, dt: number): void {
+  if (state.comboTimer > 0) {
+    state.comboTimer -= dt;
+    if (state.comboTimer <= 0) {
+      state.comboTimer = 0;
+      state.combo = 0;
+    }
+  }
+  state.shake.timer = Math.max(0, state.shake.timer - dt);
+  state.popups = state.popups.filter((popup) => (popup.ttl -= dt) > 0);
+}
+
+function triggerShake(
+  state: GameState,
+  magnitude: number,
+  duration: number
+): void {
+  // A stronger shake always wins; a weaker one never cuts a strong one short.
+  if (state.shake.timer <= 0 || magnitude >= state.shake.magnitude) {
+    state.shake = { timer: duration, duration, magnitude };
+  }
 }
 
 function updatePlayer(player: Player, input: InputState, dt: number): void {
@@ -121,7 +153,18 @@ function resolveAttackHits(state: GameState): void {
   const hitbox = getAttackHitbox(state.player);
   state.zombies = state.zombies.filter((zombie) => {
     if (circleRectOverlap(zombie.pos.x, zombie.pos.y, zombie.radius, hitbox)) {
-      state.score += SCORE_PER_ZOMBIE;
+      state.combo = state.comboTimer > 0 ? state.combo + 1 : 1;
+      state.comboTimer = COMBO_WINDOW;
+      const gained =
+        SCORE_PER_ZOMBIE * Math.min(state.combo, COMBO_MAX_MULT);
+      state.score += gained;
+      state.popups.push({
+        id: state.nextId++,
+        pos: { ...zombie.pos },
+        text: `+${gained}`,
+        ttl: POPUP_TTL,
+      });
+      triggerShake(state, SHAKE_KILL_MAGNITUDE, SHAKE_KILL_DURATION);
       if (Math.random() < DROP_CHANCE) {
         state.drops.push({
           id: state.nextId++,
@@ -262,6 +305,10 @@ function resolveContacts(state: GameState): void {
       circleRectOverlap(zombie.pos.x, zombie.pos.y, zombie.radius, playerRect)
     ) {
       player.health -= 1;
+      // Taking a hit rattles the screen and breaks the kill chain.
+      triggerShake(state, SHAKE_HIT_MAGNITUDE, SHAKE_HIT_DURATION);
+      state.combo = 0;
+      state.comboTimer = 0;
       return false;
     }
     return true;

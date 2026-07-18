@@ -47,12 +47,33 @@ export interface HealthDrop {
   ttl: number;
 }
 
+export interface ScorePopup {
+  id: number;
+  pos: Vector2;
+  text: string;
+  /** Seconds left; drives the float-up and fade-out. */
+  ttl: number;
+}
+
+export interface Shake {
+  /** Seconds of shake left; 0 = still. */
+  timer: number;
+  duration: number;
+  magnitude: number;
+}
+
 export interface GameState {
   status: GameStatus;
   player: Player;
   zombies: Zombie[];
   drops: HealthDrop[];
+  popups: ScorePopup[];
   score: number;
+  /** Current kill chain; 0 when no combo is running. */
+  combo: number;
+  /** Seconds left to extend the combo with another kill. */
+  comboTimer: number;
+  shake: Shake;
   /** Seconds since the run started; drives the difficulty ramp. */
   elapsed: number;
   /** Seconds until the next zombie spawns. */

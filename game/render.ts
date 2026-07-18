@@ -1,6 +1,8 @@
 import {
   ATTACK_DURATION,
   KICK_DURATION,
+  POPUP_RISE,
+  POPUP_TTL,
   WORLD_HEIGHT,
   WORLD_WIDTH,
 } from "./constants";
@@ -42,6 +44,20 @@ export function setHudFont(fontFamily: string): void {
 
 /** Draws one full frame from the current state. */
 export function render(ctx: CanvasRenderingContext2D, state: GameState): void {
+  // Screen shake: jolt the whole world layer, decaying over the shake timer.
+  const { timer, duration, magnitude } = state.shake;
+  const mag = timer > 0 ? magnitude * (timer / duration) : 0;
+  if (mag > 0) {
+    // Backfill so the shaken world doesn't reveal black at the edges.
+    ctx.fillStyle = "#6fb545";
+    ctx.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+  }
+  ctx.save();
+  ctx.translate(
+    Math.round(Math.sin(state.elapsed * 55) * mag),
+    Math.round(Math.cos(state.elapsed * 47) * mag)
+  );
+
   ctx.drawImage(getBackground(), 0, 0, WORLD_WIDTH, WORLD_HEIGHT);
   drawAttackFlash(ctx, state.player);
   drawDrops(ctx, state);
@@ -49,6 +65,8 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState): void {
     drawZombie(ctx, zombie, state);
   }
   drawPlayer(ctx, state);
+  drawPopups(ctx, state);
+  ctx.restore();
 
   // Night falls over the whole scene, but never over the HUD.
   const night = getNightFactor(state.elapsed);
@@ -142,6 +160,24 @@ function drawAttackFlash(ctx: CanvasRenderingContext2D, player: Player): void {
   ctx.fillRect(hitbox.x, hitbox.y, hitbox.w, hitbox.h);
 }
 
+function drawPopups(ctx: CanvasRenderingContext2D, state: GameState): void {
+  ctx.font = `12px ${hudFont}`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "bottom";
+  for (const popup of state.popups) {
+    const age = 1 - popup.ttl / POPUP_TTL;
+    const y = popup.pos.y - 26 - age * POPUP_RISE;
+    ctx.globalAlpha = Math.min(1, popup.ttl / (POPUP_TTL * 0.4));
+    ctx.fillStyle = "#22222a";
+    ctx.fillText(popup.text, popup.pos.x + 1, y + 1);
+    ctx.fillStyle = "#ffd23f";
+    ctx.fillText(popup.text, popup.pos.x, y);
+  }
+  ctx.globalAlpha = 1;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+}
+
 function drawDrops(ctx: CanvasRenderingContext2D, state: GameState): void {
   for (const drop of state.drops) {
     // Blink through the last three seconds before fading away.
@@ -224,6 +260,14 @@ function drawHud(
   ctx.fillText(`SCORE ${state.score}`, 18, 18);
   ctx.fillStyle = "#fffbe8";
   ctx.fillText(`SCORE ${state.score}`, 16, 16);
+
+  if (state.combo >= 2) {
+    ctx.font = `12px ${hudFont}`;
+    ctx.fillStyle = "rgba(20, 35, 12, 0.6)";
+    ctx.fillText(`COMBO x${state.combo}`, 18, 46);
+    ctx.fillStyle = "#ffd23f";
+    ctx.fillText(`COMBO x${state.combo}`, 16, 44);
+  }
 
   const { health, maxHealth } = state.player;
   const spacing = 30;
