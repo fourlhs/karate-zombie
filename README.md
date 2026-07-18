@@ -32,6 +32,10 @@ For a production build: `npm run build && npm start`.
 - Killed zombies sometimes (20%) drop a heart. Walk into it to regain 1
   health (up to 3). Drops blink and vanish after 12 seconds, and stay on the
   ground if you're already at full health.
+- Kills within 2 seconds of each other chain into a combo: each chained kill
+  is worth 10 × the combo count (capped at ×5), shown as a floating "+N"
+  popup and a COMBO counter under the score. Taking a hit breaks the chain —
+  and shakes the screen.
 
 ## Architecture
 
