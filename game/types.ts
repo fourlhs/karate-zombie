@@ -74,6 +74,8 @@ export interface GameState {
   drops: HealthDrop[];
   popups: ScorePopup[];
   score: number;
+  /** Best score from previous runs, loaded from localStorage. */
+  highScore: number;
   /** Current kill chain; 0 when no combo is running. */
   combo: number;
   /** Seconds left to extend the combo with another kill. */

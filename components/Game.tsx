@@ -1,7 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { MAX_DELTA, WORLD_HEIGHT, WORLD_WIDTH } from "@/game/constants";
+import {
+  HIGH_SCORE_KEY,
+  MAX_DELTA,
+  WORLD_HEIGHT,
+  WORLD_WIDTH,
+} from "@/game/constants";
 import { attachInput } from "@/game/input";
 import { render, setHudFont } from "@/game/render";
 import { createInitialState, createInputState } from "@/game/state";
@@ -15,10 +20,12 @@ export default function Game() {
   // Mirrors the transition into "gameover" so we only setState once, not per frame.
   const gameOverReportedRef = useRef(false);
 
-  const [overlay, setOverlay] = useState<{ visible: boolean; score: number }>({
-    visible: false,
-    score: 0,
-  });
+  const [overlay, setOverlay] = useState<{
+    visible: boolean;
+    score: number;
+    best: number;
+    isNewBest: boolean;
+  }>({ visible: false, score: 0, best: 0, isNewBest: false });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -49,7 +56,14 @@ export default function Game() {
 
       if (state.status === "gameover" && !gameOverReportedRef.current) {
         gameOverReportedRef.current = true;
-        setOverlay({ visible: true, score: state.score });
+        const isNewBest = state.score > state.highScore;
+        const best = Math.max(state.score, state.highScore);
+        try {
+          localStorage.setItem(HIGH_SCORE_KEY, String(best));
+        } catch {
+          // Storage can be unavailable (private mode); the run still works.
+        }
+        setOverlay({ visible: true, score: state.score, best, isNewBest });
       }
 
       rafId = requestAnimationFrame(frame);
@@ -65,7 +79,7 @@ export default function Game() {
   const restart = useCallback(() => {
     stateRef.current = createInitialState();
     gameOverReportedRef.current = false;
-    setOverlay({ visible: false, score: 0 });
+    setOverlay({ visible: false, score: 0, best: 0, isNewBest: false });
   }, []);
 
   return (
@@ -81,6 +95,11 @@ export default function Game() {
           <p>
             Final score: <strong>{overlay.score}</strong>
           </p>
+          {overlay.isNewBest ? (
+            <p className="new-best">NEW BEST!</p>
+          ) : (
+            <p className="best">Best: {overlay.best}</p>
+          )}
           <button type="button" onClick={restart} autoFocus>
             Restart
           </button>

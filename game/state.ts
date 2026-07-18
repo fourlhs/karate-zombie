@@ -1,4 +1,5 @@
 import {
+  HIGH_SCORE_KEY,
   PLAYER_MAX_HEALTH,
   PLAYER_SIZE,
   PLAYER_SPEED,
@@ -7,6 +8,12 @@ import {
   WORLD_WIDTH,
 } from "./constants";
 import type { GameState, InputState } from "./types";
+
+/** Guarded so it also runs during server-side rendering, where there is no storage. */
+export function loadHighScore(): number {
+  if (typeof localStorage === "undefined") return 0;
+  return Number(localStorage.getItem(HIGH_SCORE_KEY)) || 0;
+}
 
 export function createInitialState(): GameState {
   return {
@@ -33,6 +40,7 @@ export function createInitialState(): GameState {
     drops: [],
     popups: [],
     score: 0,
+    highScore: loadHighScore(),
     combo: 0,
     comboTimer: 0,
     shake: { timer: 0, duration: 1, magnitude: 0 },

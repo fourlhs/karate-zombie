@@ -295,6 +295,16 @@ function drawHud(
   }
 
   ctx.font = `10px ${hudFont}`;
+  ctx.textAlign = "right";
+  ctx.fillStyle = "rgba(255, 251, 232, 0.75)";
+  ctx.fillText(
+    `BEST ${Math.max(state.highScore, state.score)}`,
+    WORLD_WIDTH - 16,
+    48
+  );
+  ctx.textAlign = "left";
+
+  ctx.font = `10px ${hudFont}`;
   ctx.fillStyle = "rgba(20, 35, 12, 0.55)";
   ctx.fillText(
     "WASD MOVE · SPACE PUNCH · K KICK · SHIFT DASH",

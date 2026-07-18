@@ -38,6 +38,8 @@ export const SPAWN_INTERVAL_MIN = 0.45;
 /** Seconds over which the spawn interval ramps from start to min. */
 export const SPAWN_RAMP_DURATION = 90;
 
+export const HIGH_SCORE_KEY = "karate-zombies-high-score";
+
 /** Dash: a quick burst on Shift with brief invulnerability. */
 export const DASH_SPEED = 800;
 export const DASH_DURATION = 0.18;

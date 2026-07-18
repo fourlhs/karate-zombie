@@ -63,6 +63,17 @@ body {
   line-height: 1.6;
 }
 
+.game-over .best {
+  font-size: 11px;
+  color: rgba(244, 241, 232, 0.7);
+}
+
+.game-over .new-best {
+  font-size: 13px;
+  color: #ffd23f;
+  text-shadow: 2px 2px 0 #4a3a00;
+}
+
 .game-over button {
   margin-top: 8px;
   padding: 12px 24px;
