@@ -4,10 +4,25 @@ import {
   ATTACK_REACH,
   ATTACK_WIDTH,
   SCORE_PER_ZOMBIE,
+  SPAWN_INTERVAL_MIN,
+  SPAWN_INTERVAL_START,
+  SPAWN_MARGIN,
+  SPAWN_RAMP_DURATION,
   WORLD_HEIGHT,
   WORLD_WIDTH,
+  ZOMBIE_BASE_SPEED,
+  ZOMBIE_RADIUS,
+  ZOMBIE_SPEED_RAMP,
+  ZOMBIE_SPEED_RAMP_MAX,
+  ZOMBIE_SPEED_VARIANCE,
 } from "./constants";
-import type { GameState, InputState, Player, Rect } from "./types";
+import type {
+  GameState,
+  InputState,
+  Player,
+  Rect,
+  Zombie,
+} from "./types";
 
 /** Advances the whole simulation by dt seconds. Mutates state in place. */
 export function update(state: GameState, input: InputState, dt: number): void {
@@ -19,6 +34,7 @@ export function update(state: GameState, input: InputState, dt: number): void {
   state.elapsed += dt;
   updatePlayer(state.player, input, dt);
   resolveAttackHits(state);
+  updateSpawning(state, dt);
 }
 
 function updatePlayer(player: Player, input: InputState, dt: number): void {
@@ -91,6 +107,61 @@ function resolveAttackHits(state: GameState): void {
     }
     return true;
   });
+}
+
+function updateSpawning(state: GameState, dt: number): void {
+  state.spawnTimer -= dt;
+  while (state.spawnTimer <= 0) {
+    state.zombies.push(createZombie(state));
+    state.spawnTimer += currentSpawnInterval(state.elapsed);
+  }
+}
+
+/** Spawn interval shrinks linearly from start to min over the ramp duration. */
+function currentSpawnInterval(elapsed: number): number {
+  const t = Math.min(elapsed / SPAWN_RAMP_DURATION, 1);
+  return SPAWN_INTERVAL_START + (SPAWN_INTERVAL_MIN - SPAWN_INTERVAL_START) * t;
+}
+
+function createZombie(state: GameState): Zombie {
+  const speedRamp = Math.min(
+    state.elapsed * ZOMBIE_SPEED_RAMP,
+    ZOMBIE_SPEED_RAMP_MAX
+  );
+  const speed =
+    ZOMBIE_BASE_SPEED +
+    (Math.random() * 2 - 1) * ZOMBIE_SPEED_VARIANCE +
+    speedRamp;
+
+  // Pick a random edge and a random point along it, just off-screen.
+  const edge = Math.floor(Math.random() * 4);
+  let x: number;
+  let y: number;
+  switch (edge) {
+    case 0: // top
+      x = Math.random() * WORLD_WIDTH;
+      y = -SPAWN_MARGIN;
+      break;
+    case 1: // bottom
+      x = Math.random() * WORLD_WIDTH;
+      y = WORLD_HEIGHT + SPAWN_MARGIN;
+      break;
+    case 2: // left
+      x = -SPAWN_MARGIN;
+      y = Math.random() * WORLD_HEIGHT;
+      break;
+    default: // right
+      x = WORLD_WIDTH + SPAWN_MARGIN;
+      y = Math.random() * WORLD_HEIGHT;
+      break;
+  }
+
+  return {
+    id: state.nextZombieId++,
+    pos: { x, y },
+    radius: ZOMBIE_RADIUS,
+    speed,
+  };
 }
 
 function circleRectOverlap(
