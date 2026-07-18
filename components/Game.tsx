@@ -51,6 +51,7 @@ export default function Game() {
     setMuted(!stored);
   }, []);
 
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -127,6 +128,25 @@ export default function Game() {
     gameOverReportedRef.current = false;
     setOverlay({ visible: false, score: 0, best: 0, isNewBest: false });
   }, []);
+
+  // Dev-only test hook: ?test=1 exposes live state so test drivers can read
+  // positions directly and set up scenarios instead of pixel-scanning.
+  useEffect(() => {
+    if (!new URLSearchParams(window.location.search).has("test")) return;
+    const handle = {
+      get state() {
+        return stateRef.current;
+      },
+      get input() {
+        return inputRef.current;
+      },
+      restart,
+    };
+    (window as unknown as { __kz?: typeof handle }).__kz = handle;
+    return () => {
+      delete (window as unknown as { __kz?: typeof handle }).__kz;
+    };
+  }, [restart]);
 
   const toggleSound = useCallback(() => {
     setSoundOn((on) => {
