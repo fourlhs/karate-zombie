@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
+import { Press_Start_2P } from "next/font/google";
 import "./globals.css";
+
+const arcadeFont = Press_Start_2P({ weight: "400", subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Karate Zombies",
@@ -14,7 +17,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className={arcadeFont.className}>{children}</body>
     </html>
   );
 }
