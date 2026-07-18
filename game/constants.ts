@@ -81,6 +81,12 @@ export const SHOCKWAVE_DURATION = 0.5;
 /** Slow motion: starting time scale, ramping back to full speed. */
 export const SLOWMO_SCALE = 0.2;
 export const SLOWMO_SPECIAL_DURATION = 0.6;
+export const SLOWMO_BOSS_DURATION = 1.0;
+
+/** Goo particles sprayed on kills. */
+export const PARTICLES_PER_KILL = 8;
+export const PARTICLES_PER_BOSS = 24;
+export const PARTICLE_TTL = 0.45;
 
 /** Dawn upgrades: pick one at the start of each day (after night 1). */
 export const UPGRADE_DAMAGE_INC = 1;

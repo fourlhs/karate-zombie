@@ -92,6 +92,15 @@ export interface HealthDrop {
   ttl: number;
 }
 
+export interface Particle {
+  pos: Vector2;
+  vel: Vector2;
+  /** Seconds left; drives the fade. */
+  ttl: number;
+  maxTtl: number;
+  color: string;
+}
+
 export interface ScorePopup {
   id: number;
   pos: Vector2;
@@ -118,6 +127,7 @@ export interface GameState {
   pendingUpgrade: boolean;
   drops: HealthDrop[];
   popups: ScorePopup[];
+  particles: Particle[];
   /** Sound events queued by the update step; drained and played by the shell. */
   sounds: SoundEffect[];
   score: number;

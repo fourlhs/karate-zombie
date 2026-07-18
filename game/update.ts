@@ -31,6 +31,9 @@ import {
   NIGHT_FADE,
   NIGHT_SPAWN_FACTOR,
   NIGHT_SPEED_FACTOR,
+  PARTICLE_TTL,
+  PARTICLES_PER_BOSS,
+  PARTICLES_PER_KILL,
   POPUP_TTL,
   SCORE_PER_ZOMBIE,
   SHAKE_HIT_DURATION,
@@ -38,6 +41,7 @@ import {
   SHAKE_KILL_DURATION,
   SHAKE_KILL_MAGNITUDE,
   SHOCKWAVE_DURATION,
+  SLOWMO_BOSS_DURATION,
   SLOWMO_SCALE,
   SLOWMO_SPECIAL_DURATION,
   SPECIAL_BOSS_DAMAGE,
@@ -208,6 +212,15 @@ function updateEffects(state: GameState, dt: number): void {
     state.shockwave.timer -= dt;
     if (state.shockwave.timer <= 0) state.shockwave = null;
   }
+  state.particles = state.particles.filter((p) => {
+    p.ttl -= dt;
+    if (p.ttl <= 0) return false;
+    p.pos.x += p.vel.x * dt;
+    p.pos.y += p.vel.y * dt;
+    p.vel.x *= 1 - 3 * dt;
+    p.vel.y *= 1 - 3 * dt;
+    return true;
+  });
 }
 
 function triggerShake(
@@ -360,6 +373,12 @@ function hurtBoss(state: GameState, amount: number): void {
     });
     triggerShake(state, SHAKE_HIT_MAGNITUDE, SHAKE_HIT_DURATION);
     state.sounds.push("bossDie");
+    spawnParticles(state, boss.pos, PARTICLES_PER_BOSS);
+    // A beat of slow motion sells the boss going down.
+    state.slowMo = {
+      timer: SLOWMO_BOSS_DURATION,
+      duration: SLOWMO_BOSS_DURATION,
+    };
     state.boss = null;
   } else {
     triggerShake(state, SHAKE_KILL_MAGNITUDE, SHAKE_KILL_DURATION);
@@ -398,6 +417,23 @@ function resolveSpecial(state: GameState, input: InputState): void {
   }
 }
 
+const GOO_COLORS = ["#a6d17a", "#7ba85a", "#4a4e69"];
+
+/** Sprays goo particles radially from a point. */
+function spawnParticles(state: GameState, pos: Vector2, count: number): void {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 40 + Math.random() * 120;
+    state.particles.push({
+      pos: { ...pos },
+      vel: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
+      ttl: PARTICLE_TTL * (0.6 + Math.random() * 0.6),
+      maxTtl: PARTICLE_TTL,
+      color: GOO_COLORS[Math.floor(Math.random() * GOO_COLORS.length)],
+    });
+  }
+}
+
 /** Score, combo, popup, shake, sound, and maybe a heart for one dead zombie. */
 function registerKill(
   state: GameState,
@@ -419,6 +455,7 @@ function registerKill(
   });
   triggerShake(state, SHAKE_KILL_MAGNITUDE, SHAKE_KILL_DURATION);
   state.sounds.push("kill");
+  spawnParticles(state, zombie.pos, PARTICLES_PER_KILL);
   if (Math.random() < DROP_CHANCE) {
     state.drops.push({
       id: state.nextId++,

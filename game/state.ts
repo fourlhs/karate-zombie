@@ -44,6 +44,7 @@ export function createInitialState(): GameState {
     pendingUpgrade: false,
     drops: [],
     popups: [],
+    particles: [],
     sounds: [],
     score: 0,
     highScore: loadHighScore(),

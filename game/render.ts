@@ -73,6 +73,7 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState): void {
     drawBoss(ctx, state);
   }
   drawPlayer(ctx, state);
+  drawParticles(ctx, state);
   drawShockwave(ctx, state);
   drawPopups(ctx, state);
   ctx.restore();
@@ -330,6 +331,15 @@ function drawBoss(ctx: CanvasRenderingContext2D, state: GameState): void {
   ctx.fillRect(barX - 1, barY - 1, barW + 2, 8);
   ctx.fillStyle = "#e5484d";
   ctx.fillRect(barX, barY, (barW * boss.hp) / boss.maxHp, 6);
+}
+
+function drawParticles(ctx: CanvasRenderingContext2D, state: GameState): void {
+  for (const p of state.particles) {
+    ctx.globalAlpha = Math.min(1, p.ttl / p.maxTtl);
+    ctx.fillStyle = p.color;
+    ctx.fillRect(Math.round(p.pos.x) - 2, Math.round(p.pos.y) - 2, 4, 4);
+  }
+  ctx.globalAlpha = 1;
 }
 
 function drawShockwave(ctx: CanvasRenderingContext2D, state: GameState): void {
