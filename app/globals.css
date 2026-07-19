@@ -41,12 +41,36 @@ body {
   }
 }
 
-/* Portrait phones: keep the game up top, controls own the space below. */
+/* Portrait phones: keep the game up top, controls own the space below.
+   Top padding leaves room for the fixed back-to-home link. */
 @media (max-width: 700px) and (orientation: portrait) {
   .page {
     align-items: flex-start;
-    padding-top: 12px;
+    padding-top: 52px;
   }
+}
+
+/* Back to the main site, mirroring the site's back-link but in game colors. */
+.back-link {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  left: calc(12px + env(safe-area-inset-left, 0px));
+  z-index: 6;
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: rgba(244, 241, 232, 0.75);
+  background: rgba(10, 12, 16, 0.55);
+  border: 2px solid rgba(244, 241, 232, 0.3);
+  border-radius: 4px;
+  text-decoration: none;
+  transition: color 0.2s, background 0.2s;
+}
+
+.back-link:hover {
+  color: #f4f1e8;
+  background: rgba(10, 12, 16, 0.85);
 }
 
 .game-canvas {
@@ -289,18 +313,8 @@ body {
   background: rgba(10, 12, 16, 0.85);
 }
 
-/* Anchor styled as a corner button; sits between settings and fullscreen so
-   the row stays gap-free when fullscreen is unsupported. */
-.home-button {
-  right: 58px;
-  display: grid;
-  place-items: center;
-  font-size: 20px;
-  text-decoration: none;
-}
-
 .fullscreen-button {
-  right: 106px;
+  right: 58px;
 }
 
 /* Fatter tap targets on touch screens. */
@@ -311,13 +325,8 @@ body {
     font-size: 22px;
   }
 
-  .home-button {
-    right: 66px;
-    font-size: 24px;
-  }
-
   .fullscreen-button {
-    right: 122px;
+    right: 66px;
   }
 }
 

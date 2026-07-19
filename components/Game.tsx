@@ -414,13 +414,6 @@ export default function Game() {
       >
         ⚙
       </button>
-      <a
-        href="/"
-        className="settings-button home-button"
-        aria-label="Back to nikosfourlis.com"
-      >
-        ⌂
-      </a>
       {fsSupported && (
         <button
           type="button"
