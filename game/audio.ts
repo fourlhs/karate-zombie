@@ -21,10 +21,17 @@ export function getAudioBus(): { ctx: AudioContext; master: GainNode } | null {
   return context && master ? { ctx: context, master } : null;
 }
 
-/** Browsers only allow audio after a user gesture; call this from one. */
-export function unlockAudio(): void {
-  ensureContext();
+/**
+ * Browsers only allow audio after a user gesture; call this from one.
+ * Returns true once the context is actually running — callers should keep
+ * retrying on later gestures until it is.
+ */
+export function unlockAudio(): boolean {
+  const context = ensureContext();
+  return context !== null && context.state === "running";
 }
+
+let kicked = false;
 
 function ensureContext(): AudioContext | null {
   if (typeof window === "undefined") return null;
@@ -32,11 +39,25 @@ function ensureContext(): AudioContext | null {
     if (!window.AudioContext) return null;
     ctx = new AudioContext();
     master = ctx.createGain();
-    master.gain.value = 0.35;
+    master.gain.value = muted ? 0 : 0.35;
     master.connect(ctx.destination);
   }
   if (ctx.state === "suspended") {
     void ctx.resume();
+  }
+  if (!kicked && ctx.state !== "closed") {
+    // The classic iOS unlock: playing any buffer inside a gesture, even one
+    // silent sample, flips the context into really producing sound.
+    try {
+      const buffer = ctx.createBuffer(1, 1, 22050);
+      const src = ctx.createBufferSource();
+      src.buffer = buffer;
+      src.connect(ctx.destination);
+      src.start(0);
+      kicked = true;
+    } catch {
+      // Retry on the next gesture.
+    }
   }
   return ctx;
 }

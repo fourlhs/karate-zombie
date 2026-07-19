@@ -222,12 +222,15 @@ export default function Game() {
     const onEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") setSettingsOpen((open) => !open);
     };
-    // Browsers only allow audio after a user gesture — unlock on the first one.
+    // Browsers only allow audio after a user gesture. Keep retrying on every
+    // gesture until the context is genuinely running — on iOS the first
+    // resume attempt can silently fail, which left the game mute at first.
     const unlock = () => {
-      unlockAudio();
       audioReadyRef.current = true;
-      window.removeEventListener("keydown", unlock);
-      window.removeEventListener("pointerdown", unlock);
+      if (unlockAudio()) {
+        window.removeEventListener("keydown", unlock);
+        window.removeEventListener("pointerdown", unlock);
+      }
     };
     window.addEventListener("keydown", onEscape);
     window.addEventListener("keydown", unlock);
@@ -237,7 +240,10 @@ export default function Game() {
     let last = performance.now();
 
     const frame = (now: number) => {
-      const dt = Math.min((now - last) / 1000, MAX_DELTA);
+      // Never negative: the first rAF timestamp can predate `last`, and a
+      // negative dt walks elapsed below zero — which once read as a day
+      // crossing and offered a dawn upgrade on a freshly loaded page.
+      const dt = Math.min(Math.max(now - last, 0) / 1000, MAX_DELTA);
       last = now;
 
       const state = stateRef.current;
@@ -418,7 +424,9 @@ export default function Game() {
           ⛶
         </button>
       )}
-      {isTouch && <TouchControls inputRef={inputRef} />}
+      {isTouch && !settingsOpen && !upgradeOpen && !overlay.visible && (
+        <TouchControls inputRef={inputRef} />
+      )}
       {overlay.visible && (
         <div className="game-over" onClick={overlayTap}>
           {confettiPieces.length > 0 && (

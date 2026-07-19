@@ -1,6 +1,11 @@
 "use client";
 
-import { useRef, type MutableRefObject, type PointerEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  type MutableRefObject,
+  type PointerEvent,
+} from "react";
 import type { Direction, InputState } from "@/game/types";
 
 /** Max distance the joystick nub travels, in px. */
@@ -29,6 +34,15 @@ export default function TouchControls({
   const nubRef = useRef<HTMLDivElement>(null);
   const stickPointerRef = useRef<number | null>(null);
   const centerRef = useRef({ x: 0, y: 0 });
+
+  // The controls unmount while overlays are open — don't leave the player
+  // walking on a direction that was held at that moment.
+  useEffect(() => {
+    const input = inputRef.current;
+    return () => {
+      input.heldDirections = [];
+    };
+  }, [inputRef]);
 
   const setDirections = (nx: number, ny: number): void => {
     // Map the analog vector onto held directions; the dominant axis goes
